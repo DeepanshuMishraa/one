@@ -13,7 +13,7 @@ export default function Hero() {
           "[mask-image:radial-gradient(600px_circle_at_center,white,transparent)]",
         )}
       />
-      <div className="motion-blur-in-md motion-opacity-in-0 flex flex-col items-center justify-center mt-8 sm:mt-12 md:mt-20 px-2 sm:px-4 space-y-6 sm:space-y-8 md:space-y-12">
+      <div className="motion-blur-in-md motion-opacity-in-0 flex flex-col items-center justify-center pt-24 sm:pt-28 md:pt-32 px-2 sm:px-4 space-y-6 sm:space-y-8 md:space-y-12">
         <div className="flex flex-col items-center space-y-2">
           <RainbowButton className="rounded-full text-xs sm:text-sm">
             Early access
