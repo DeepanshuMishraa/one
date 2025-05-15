@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
 import Appbar from "@/components/Appbar";
-
+import { ThemeProvider } from "@/providers/theme-provider";
 const calSans = localFont({
   src: "./fonts/CalSans-Regular.ttf"
 })
@@ -19,12 +19,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${calSans.className} antialiased`}
       >
-        <Appbar />
-        {children}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <Appbar />
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );
