@@ -23,7 +23,7 @@ One is a modern calendar application that lets you interact with your schedule t
 
 ## Getting Started
 
-This project is currently in early access. Join the waitlist at [one](https://calendar.one.pro) to be notified when it launches.
+This project is currently in early access. Join the waitlist at [one](https://one.deepanshumishra.xyz) to be notified when it launches.
 
 ## Development
 
