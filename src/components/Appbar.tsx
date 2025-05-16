@@ -21,7 +21,8 @@ import {
   IconBrandDiscord
 } from '@tabler/icons-react';
 import Image from 'next/image';
-
+import { signOut, useSession } from '@/lib/auth.client';
+import { useRouter } from 'next/navigation';
 const resources = [
   {
     title: 'GitHub',
@@ -69,6 +70,8 @@ const aboutLinks = [
 
 export default function Appbar() {
   const [open, setOpen] = useState(false);
+  const { data: session } = useSession();
+  const router = useRouter();
 
   return (
     <>
@@ -114,11 +117,24 @@ export default function Appbar() {
             </NavigationMenu>
           </div>
           <div className="flex gap-2">
-            <a href="/login">
-              <Button variant="ghost" className="h-8">
-                Sign in
-              </Button>
-            </a>
+            {session?.user ? (<Button onClick={async () => {
+              await signOut({
+                fetchOptions: {
+                  onSuccess: () => {
+                    router.push("/login")
+                  }
+                }
+              })
+            }} variant="ghost" className="h-8">
+              Logout
+            </Button>) : (
+              <a href="/login">
+                <Button variant="ghost" className="h-8">
+                  Sign in
+                </Button>
+              </a>
+            )}
+
             <Link target="_blank" prefetch href="/contact">
               <Button className="h-8 font-medium">Contact Us</Button>
             </Link>
@@ -139,9 +155,23 @@ export default function Appbar() {
               <SheetTitle>
                 <Image src="/logo.svg" alt="One" width={35} height={35} className="object-contain" />
               </SheetTitle>
-              <a href="/login">
-                <Button variant="outline" className="w-24">Sign in</Button>
-              </a>
+              {session?.user ? (
+                <Button variant="outline" className="w-24" onClick={() => {
+                  signOut({
+                    fetchOptions: {
+                      onSuccess: () => {
+                        router.push("/login")
+                      }
+                    }
+                  })
+                }}>
+                  Logout
+                </Button>
+              ) : (
+                <a href="/login">
+                  <Button variant="outline" className="w-24">Sign in</Button>
+                </a>
+              )}
             </SheetHeader>
             <div className="mt-8 flex flex-col space-y-4">
               <div className="space-y-4">
