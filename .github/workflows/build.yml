@@ -1,0 +1,22 @@
+name: autofix.ci
+
+on:
+  pull_request:
+
+jobs:
+  autofix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code 🛎
+        uses: actions/checkout@v4
+
+      - name: Setup Pnpm 🌟
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node 📦
+        uses: useblacksmith/setup-node@v5
+        with:
+          node-version: latest
+
+      - name: Install dependencies 📦
+        run: pnpm install
