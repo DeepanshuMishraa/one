@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
-import localFont from "next/font/local";
 import "./globals.css";
-import Appbar from "@/components/Appbar";
 import { ThemeProvider } from "@/providers/theme-provider";
-const calSans = localFont({
-  src: "./fonts/CalSans-Regular.ttf"
-})
+import { Geist} from "next/font/google";
 
+
+const geist = Geist({
+  subsets: ["latin"],
+  variable: "--font-geist",
+})
 
 export const metadata: Metadata = {
   title: "One",
@@ -21,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${calSans.className} antialiased`}
+        className={`${geist.className} antialiased`}
       >
         <ThemeProvider
           attribute="class"
@@ -29,7 +30,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Appbar />
+
           {children}
         </ThemeProvider>
       </body>
