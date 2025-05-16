@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
-import { Geist} from "next/font/google";
+import { Geist } from "next/font/google";
+import { ToastProvider } from "@/components/ui/toast";
 
 
 const geist = Geist({
@@ -30,8 +31,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

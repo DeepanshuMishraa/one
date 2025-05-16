@@ -75,7 +75,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
   const router = useRouter()
 
   const navItems = [
-    { icon: <Calendar size={20} />, label: "Calendar", href: "/dashboard/calendar" },
+    { icon: <Calendar size={20} />, label: "Calendar", href: "/dashboard" },
     { icon: <Clock size={20} />, label: "Today's Focus", href: "/dashboard/focus" },
     { icon: <FileText size={20} />, label: "Notes", href: "/dashboard/notes" },
     { icon: <MessageSquare size={20} />, label: "Conversations", href: "/dashboard/conversations" },
