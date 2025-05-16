@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import { DotPattern } from "./magicui/dot-pattern";
-import { RainbowButton } from "./magicui/rainbow-button";
-import { Safari } from "./magicui/safari";
+import { DotPattern } from "./ui/dot-pattern";
+import { RainbowButton } from "./ui/rainbow-button";
+import { Safari } from "./ui/safari";
 import { Button } from "./ui/button";
 
 export default function Hero() {
