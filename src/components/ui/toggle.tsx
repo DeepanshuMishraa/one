@@ -1,57 +1,47 @@
 "use client"
 
-import { Moon, Sun } from "lucide-react"
+import * as React from "react"
+import * as TogglePrimitive from "@radix-ui/react-toggle"
+import { cva, type VariantProps } from "class-variance-authority"
+
 import { cn } from "@/lib/utils"
-import { useTheme } from "next-themes"
-import { motion } from "framer-motion"
 
-interface ThemeToggleProps {
-  className?: string
-}
+const toggleVariants = cva(
+  "inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium hover:bg-muted hover:text-muted-foreground disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 [&_svg]:shrink-0 focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] outline-none transition-[color,box-shadow] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive whitespace-nowrap",
+  {
+    variants: {
+      variant: {
+        default: "bg-transparent",
+        outline:
+          "border border-input bg-transparent shadow-xs hover:bg-accent hover:text-accent-foreground",
+      },
+      size: {
+        default: "h-9 px-2 min-w-9",
+        sm: "h-8 px-1.5 min-w-8",
+        lg: "h-10 px-2.5 min-w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+      size: "default",
+    },
+  }
+)
 
-export function ThemeToggle({ className }: ThemeToggleProps) {
-  const { resolvedTheme, setTheme } = useTheme()
-  const isDark = resolvedTheme === "dark"
-
+function Toggle({
+  className,
+  variant,
+  size,
+  ...props
+}: React.ComponentProps<typeof TogglePrimitive.Root> &
+  VariantProps<typeof toggleVariants>) {
   return (
-    <motion.div
-      className={cn(
-        "flex w-16 h-8 p-1 rounded-full cursor-pointer",
-        isDark
-          ? "bg-zinc-950 border border-zinc-800"
-          : "bg-white border border-zinc-200",
-        className
-      )}
-      onClick={() => setTheme(isDark ? "light" : "dark")}
-      role="button"
-      tabIndex={0}
-      animate={{
-        backgroundColor: isDark ? "rgb(9, 9, 11)" : "rgb(255, 255, 255)",
-      }}
-      transition={{ type: "spring", duration: 0.7 }}
-    >
-      <div className="flex justify-between items-center w-full relative">
-        <motion.div
-          className="absolute flex justify-center items-center w-6 h-6 rounded-full"
-          animate={{
-            x: isDark ? 0 : 32,
-            backgroundColor: isDark ? "rgb(39, 39, 42)" : "rgb(229, 231, 235)",
-          }}
-          transition={{ type: "spring", stiffness: 400, damping: 30 }}
-        >
-          <motion.div
-            initial={false}
-            animate={{ rotate: isDark ? 0 : 180, scale: 1 }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-          >
-            {isDark ? (
-              <Moon className="w-4 h-4 text-white" strokeWidth={1.5} />
-            ) : (
-              <Sun className="w-4 h-4 text-gray-700" strokeWidth={1.5} />
-            )}
-          </motion.div>
-        </motion.div>
-      </div>
-    </motion.div>
+    <TogglePrimitive.Root
+      data-slot="toggle"
+      className={cn(toggleVariants({ variant, size, className }))}
+      {...props}
+    />
   )
 }
+
+export { Toggle, toggleVariants }
