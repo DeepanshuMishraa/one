@@ -13,8 +13,14 @@ import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
 import { useState } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
+import {
+  IconBrandGithub,
+  IconBrandTwitter,
+  IconBrandLinkedin,
+  IconBrandDiscord
+} from '@tabler/icons-react';
+import Image from 'next/image';
 
 const resources = [
   {
@@ -70,11 +76,10 @@ export default function Appbar() {
       <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
         <nav className="border-input/50 bg-popover flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t p-2 px-4">
           <div className="flex items-center gap-6">
-            <a href="/" className="relative cursor-pointer">
-              <Image src="white-icon.svg" alt="One" width={22} height={22} />
-
+            <a href="/" className="flex h-[40px] items-center justify-center">
+              <Image src="/logo.svg" alt="One" width={35} height={35} priority className="object-contain" />
             </a>
-            <NavigationMenu>
+            <NavigationMenu className="flex items-center">
               <NavigationMenuList className="gap-1">
                 <NavigationMenuItem>
                   <NavigationMenuTrigger className="bg-transparent">Company</NavigationMenuTrigger>
@@ -132,41 +137,47 @@ export default function Appbar() {
           <SheetContent side="left" className="w-[300px] bg-[#111111] sm:w-[400px]">
             <SheetHeader className="flex flex-row items-center justify-between">
               <SheetTitle>
-                <Image src="white-icon.svg" alt="One" width={22} height={22} />
+                <Image src="/logo.svg" alt="One" width={35} height={35} className="object-contain" />
               </SheetTitle>
               <a href="/login">
-                <Button className="w-full">Sign in</Button>
+                <Button variant="outline" className="w-24">Sign in</Button>
               </a>
             </SheetHeader>
-            <div className="mt-8 flex flex-col space-y-3">
-              <div className="space-y-3">
-                <h4 className="text-muted-foreground text-sm font-medium">Company</h4>
+            <div className="mt-8 flex flex-col space-y-4">
+              <div className="space-y-4">
+                <h4 className="text-sm font-medium text-muted-foreground">Company</h4>
                 {aboutLinks.map((link) => (
-                  <a key={link.title} href={link.href} className="block font-medium">
+                  <a
+                    key={link.title}
+                    href={link.href}
+                    className="block py-2 text-sm font-medium hover:text-primary"
+                  >
                     {link.title}
                   </a>
                 ))}
               </div>
-              <Link target="_blank" prefetch href="https://cal.com/team/0" className="font-medium">
+              <Link
+                target="_blank"
+                prefetch
+                href="/contact"
+                className="block py-2 text-sm font-medium hover:text-primary"
+              >
                 Contact Us
               </Link>
             </div>
-            <Separator className="mt-8" />
-            <div className="mt-8 flex flex-row items-center justify-center gap-4">
+            <Separator className="my-8" />
+            <div className="flex flex-row items-center justify-center gap-8">
               {resources.map((resource) => (
                 <Link
                   key={resource.title}
                   href={resource.href}
-                  className="flex items-center gap-2 font-medium"
+                  target="_blank"
+                  className="flex items-center hover:opacity-80 transition-opacity"
                 >
-                  {resource.platform && (
-                    <Image
-                      src={`/${resource.platform}.svg`}
-                      alt={resource.platform}
-                      width={20}
-                      height={20}
-                    />
-                  )}
+                  {resource.platform === 'github' && <IconBrandGithub className="w-6 h-6 opacity-75 hover:opacity-100" />}
+                  {resource.platform === 'twitter' && <IconBrandTwitter className="w-6 h-6 opacity-75 hover:opacity-100" />}
+                  {resource.platform === 'linkedin' && <IconBrandLinkedin className="w-6 h-6 opacity-75 hover:opacity-100" />}
+                  {resource.platform === 'discord' && <IconBrandDiscord className="w-6 h-6 opacity-75 hover:opacity-100" />}
                 </Link>
               ))}
             </div>
