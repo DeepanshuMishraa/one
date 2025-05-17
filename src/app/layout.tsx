@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
-import { Geist } from "next/font/google";
+import { Work_Sans } from "next/font/google";
 import { ToastProvider } from "@/components/ui/toast";
 
-
-const geist = Geist({
+const ws = Work_Sans({
   subsets: ["latin"],
-  variable: "--font-geist",
+  variable: "--font-ws",
 })
 
 export const metadata: Metadata = {
@@ -23,7 +22,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${geist.className} antialiased`}
+        className={`${ws.className} antialiased`}
       >
         <ThemeProvider
           attribute="class"
