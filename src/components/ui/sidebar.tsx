@@ -30,7 +30,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { signOut } from "@/lib/auth.client";
+import { signOut, useSession } from "@/lib/auth.client";
+import Image from "next/image";
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -73,12 +74,13 @@ const NavItem = ({ icon, label, href, isActive, isCollapsed }: NavItemProps) => 
 export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps) {
   const pathname = usePathname() || "";
   const router = useRouter()
+  const { data: session } = useSession();
 
   const navItems = [
     { icon: <Calendar size={20} />, label: "Calendar", href: "/dashboard" },
     { icon: <Clock size={20} />, label: "Today's Focus", href: "/dashboard/focus" },
     { icon: <FileText size={20} />, label: "Notes", href: "/dashboard/notes" },
-    { icon: <MessageSquare size={20} />, label: "Conversations", href: "/dashboard/conversations" },
+    { icon: <MessageSquare size={20} />, label: "Chat", href: "/dashboard/chat" },
     { icon: <BellRing size={20} />, label: "Reminders", href: "/dashboard/reminders" },
   ];
 
@@ -183,12 +185,22 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
                     isCollapsed ? "justify-center p-2" : "p-2"
                   )}>
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10">
-                      <User size={18} className="text-foreground" />
+                      {session?.user?.image ? (
+                        <Image
+                          src={session.user.image}
+                          alt={session?.user?.name?.split(" ")[0] || ""}
+                          width={32}
+                          height={32}
+                          className="rounded-full object-cover"
+                        />
+                      ) : (
+                        <User size={20} className="text-muted-foreground" />
+                      )}
                     </div>
 
                     {!isCollapsed && (
                       <div className="flex flex-col items-start">
-                        <span className="text-sm font-medium">cato</span>
+                        <span className="text-sm font-medium">{session?.user.name}</span>
                         <span className="text-xs text-muted-foreground">View Profile</span>
                       </div>
                     )}
@@ -210,7 +222,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
                     <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={async() => {
+                  <DropdownMenuItem onClick={async () => {
                     await signOut({
                       fetchOptions: {
                         onSuccess: () => {
