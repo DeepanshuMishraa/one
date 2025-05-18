@@ -6,6 +6,7 @@ import { auth } from "@/lib/auth"
 import { eq, desc, sql } from "drizzle-orm";
 import { headers } from "next/headers"
 import { google } from "googleapis"
+import { CalendarEvent } from "@/components/calendar/calendar-types";
 
 export const getCalendarEvents = async () => {
   try {
@@ -37,11 +38,23 @@ export const getCalendarEvents = async () => {
     };
 
     const accessToken = googleAccount[0].accessToken;
+    const refreshToken = googleAccount[0].refreshToken
 
     const oauth2Client = new google.auth.OAuth2();
     oauth2Client.setCredentials({
-      access_token: accessToken
+      access_token: accessToken,
+      refresh_token: refreshToken,
     });
+
+
+    //FIX for needing to relogin every 10 minutes
+    oauth2Client.on('tokens', async (tokens) => {
+
+      await db.update(account).set({
+        accessToken: tokens.access_token,
+        ...(tokens.refresh_token && { refreshToken: tokens.refresh_token })
+      }).where(eq(account.userId, userId))
+    })
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
@@ -58,7 +71,7 @@ export const getCalendarEvents = async () => {
         pageToken,
         maxResults: 100,
         calendarId: "primary",
-        updatedMin, 
+        updatedMin,
       });
 
       if (response.data.items) {
@@ -122,8 +135,6 @@ export const getCalendarEvents = async () => {
         }
       });
     }
-
-    // Return events from database instead of API response
     const dbEvents = await db
       .select()
       .from(calendar_events)
@@ -161,6 +172,89 @@ export const getCalendarEvents = async () => {
     console.error('Calendar sync error:', error);
     return {
       error: "Failed to fetch calendar events",
+      message: error,
+      status: 500,
+    }
+  }
+}
+
+
+export const createCalendarEvents = async (event: CalendarEvent) => {
+  try {
+    const session = await auth.api.getSession({
+      headers: await headers()
+    });
+
+    if (!session?.user) {
+      throw new Error("User not authenticated");
+    }
+
+    const userId = session?.user.id;
+    const googleAccount = await db.select().from(account).where(eq(account.userId, userId));
+
+    if (googleAccount.length === 0) {
+      return {
+        error: "Google account not found",
+        message: "Please connect your Google account",
+        status: 404,
+      }
+    }
+
+    const accessToken = googleAccount[0].accessToken;
+    const refreshToken = googleAccount[0].refreshToken;
+
+    const oauth2Client = new google.auth.OAuth2();
+
+    oauth2Client.setCredentials({
+      access_token: accessToken,
+      refresh_token: refreshToken,
+    });
+
+    oauth2Client.on('tokens', async (tokens) => {
+      if (tokens.access_token) {
+        await db
+          .update(account)
+          .set({
+            accessToken: tokens.access_token,
+            ...(tokens.refresh_token && { refreshToken: tokens.refresh_token })
+          })
+          .where(eq(account.userId, userId));
+      }
+    });
+
+    const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
+
+    const calendarInfo = await calendar.calendars.get({
+      calendarId: "primary"
+    });
+
+    const userTimeZone = calendarInfo.data.timeZone
+
+    const createdEvent = await calendar.events.insert({
+      calendarId: "primary",
+      requestBody: {
+        summary: event.title,
+        description: event.description,
+        start: {
+          dateTime: event.start.toISOString(),
+          timeZone: userTimeZone
+        },
+        end: {
+          dateTime: event.end.toISOString(),
+          timeZone: userTimeZone
+        },
+      },
+    });
+
+    return {
+      status: 200,
+      event: createdEvent.data
+    }
+
+  } catch (error) {
+    console.error('Calendar sync error:', error);
+    return {
+      error: "Failed to create calendar event",
       message: error,
       status: 500,
     }
