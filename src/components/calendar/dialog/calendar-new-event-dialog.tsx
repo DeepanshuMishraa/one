@@ -153,10 +153,10 @@ export default function CalendarNewEventDialog() {
             />
 
             <div className="flex justify-end">
-              <Button type="submit" disabled={form.formState.isSubmitting}>
-                {form.formState.isSubmitting ? <Loader2 className='animate-spin' /> : "Create event"}
-              </Button>
-            </div>
+ const { mutate, isPending } = useMutation({
+...
+ <Button type="submit" disabled={isPending}>
+   {isPending ? <Loader2 className="animate-spin" /> : "Create event"}
           </form>
         </Form>
       </DialogContent>
