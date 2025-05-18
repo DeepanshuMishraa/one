@@ -35,5 +35,18 @@ export type CalendarEvent = {
   updated?: Date
 }
 
+export interface CalendarEventResponse {
+  id: string;
+  summary: string;
+  description?: string;
+  start: string;
+  end: string;
+  location?: string;
+  attendees?: any[];
+  status?: string;
+  created?: string;
+  updated?: string;
+}
+
 export const calendarModes = ['day', 'week', 'month'] as const
 export type Mode = (typeof calendarModes)[number]

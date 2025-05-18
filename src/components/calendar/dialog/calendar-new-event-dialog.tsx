@@ -63,7 +63,7 @@ export default function CalendarNewEventDialog() {
   })
 
 
-  const { mutate } = useMutation({
+  const { mutate, isPending } = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
       try {
         const newEvent = await createCalendarEvents({
@@ -153,10 +153,10 @@ export default function CalendarNewEventDialog() {
             />
 
             <div className="flex justify-end">
- const { mutate, isPending } = useMutation({
-...
- <Button type="submit" disabled={isPending}>
-   {isPending ? <Loader2 className="animate-spin" /> : "Create event"}
+              <Button type="submit" disabled={isPending}>
+                {isPending ? <Loader2 className="animate-spin" /> : "Create event"}
+              </Button>
+            </div>
           </form>
         </Form>
       </DialogContent>

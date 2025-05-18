@@ -1,3 +1,5 @@
+'use client'
+
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
@@ -34,6 +36,11 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { updateCalendarEvent, deleteCalendarEvent } from '../../../../actions/actions'
+import { useToastManager } from '@/components/ui/toast'
+import { Loader2 } from 'lucide-react'
+import { CalendarEvent } from '../calendar-types'
 
 const formSchema = z
   .object({
@@ -44,7 +51,6 @@ const formSchema = z
     end: z.string().refine((val) => !isNaN(Date.parse(val)), {
       message: 'Invalid end date',
     }),
-    color: z.string(),
   })
   .refine(
     (data) => {
@@ -72,13 +78,15 @@ export default function CalendarManageEventDialog() {
     setEvents,
   } = useCalendarContext()
 
+  const toast = useToastManager()
+  const queryClient = useQueryClient()
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
       start: '',
       end: '',
-      color: 'blue',
     },
   })
 
@@ -88,41 +96,107 @@ export default function CalendarManageEventDialog() {
         title: selectedEvent.title,
         start: format(selectedEvent.start, "yyyy-MM-dd'T'HH:mm"),
         end: format(selectedEvent.end, "yyyy-MM-dd'T'HH:mm"),
-        color: selectedEvent.color,
+
       })
     }
   }, [selectedEvent, form])
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    if (!selectedEvent) return
+  const updateMutation = useMutation({
+    mutationFn: async (values: z.infer<typeof formSchema>) => {
+      if (!selectedEvent) return
 
-    const updatedEvent = {
-      ...selectedEvent,
-      title: values.title,
-      start: new Date(values.start),
-      end: new Date(values.end),
-      color: values.color,
-    }
+      const updatedEvent = {
+        ...selectedEvent,
+        title: values.title,
+        start: new Date(values.start),
+        end: new Date(values.end),
+      }
 
-    setEvents(
-      events.map((event) =>
-        event.id === selectedEvent.id ? updatedEvent : event
+      const response = await updateCalendarEvent(updatedEvent)
+
+      if (response.error) {
+        throw new Error(response.message as string)
+      }
+
+      return response.event
+    },
+    onSuccess: (data) => {
+      if (!selectedEvent || !data) return
+
+      const updatedEvent: CalendarEvent = {
+        id: data.id || selectedEvent.id,
+        title: data.summary || selectedEvent.title,
+        description: data.description || undefined,
+        start: new Date(data.start?.dateTime || selectedEvent.start),
+        end: new Date(data.end?.dateTime || selectedEvent.end),
+      }
+
+      setEvents(
+        events.map((event) =>
+          event.id === selectedEvent.id ? updatedEvent : event
+        )
       )
-    )
-    handleClose()
-  }
 
-  function handleDelete() {
-    if (!selectedEvent) return
-    setEvents(events.filter((event) => event.id !== selectedEvent.id))
-    handleClose()
-  }
+      toast.add({
+        title: 'Success',
+        description: 'Event updated successfully',
+      })
+
+      handleClose()
+    },
+    onError: (error) => {
+      toast.add({
+        title: 'Error',
+        description: error.message || 'Failed to update event',
+      })
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] })
+    },
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedEvent) {
+        throw new Error('No event selected')
+      }
+
+      const response = await deleteCalendarEvent(selectedEvent.id)
+
+      if (response.error) {
+        throw new Error(response.message as string || 'Failed to delete event')
+      }
+
+      return response
+    },
+    onSuccess: () => {
+      if (!selectedEvent) return
+      setEvents(events.filter((event) => event.id !== selectedEvent.id))
+
+      toast.add({
+        title: 'Success',
+        description: 'Event deleted successfully',
+      })
+      handleClose()
+    },
+    onError: (error) => {
+      toast.add({
+        title: 'Error',
+        description: error.message || 'Failed to delete event',
+      })
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['calendar-events'] })
+    },
+  })
 
   function handleClose() {
     setManageEventDialogOpen(false)
     setSelectedEvent(null)
     form.reset()
   }
+
+  const isLoading = updateMutation.isPending || deleteMutation.isPending
 
   return (
     <Dialog open={manageEventDialogOpen} onOpenChange={handleClose}>
@@ -131,7 +205,10 @@ export default function CalendarManageEventDialog() {
           <DialogTitle>Manage event</DialogTitle>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit((values) => updateMutation.mutate(values))}
+            className="space-y-4"
+          >
             <FormField
               control={form.control}
               name="title"
@@ -174,24 +251,18 @@ export default function CalendarManageEventDialog() {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="color"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="font-bold">Color</FormLabel>
-                  <FormControl>
-                    <ColorPicker field={field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
 
             <DialogFooter className="flex justify-between gap-2">
               <AlertDialog>
                 <AlertDialogTrigger asChild>
-                  <Button variant="destructive" type="button">
+                  <Button
+                    variant="destructive"
+                    type="button"
+                    disabled={isLoading}
+                  >
+                    {isLoading && deleteMutation.isPending ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : null}
                     Delete
                   </Button>
                 </AlertDialogTrigger>
@@ -205,13 +276,24 @@ export default function CalendarManageEventDialog() {
                   </AlertDialogHeader>
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete}>
+                    <AlertDialogAction
+                      onClick={() => deleteMutation.mutate()}
+                      disabled={isLoading}
+                    >
+                      {isLoading && deleteMutation.isPending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      ) : null}
                       Delete
                     </AlertDialogAction>
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-              <Button type="submit">Update event</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading && updateMutation.isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Update event
+              </Button>
             </DialogFooter>
           </form>
         </Form>
