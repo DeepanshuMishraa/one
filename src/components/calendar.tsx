@@ -7,6 +7,13 @@ import { useQuery } from '@tanstack/react-query'
 import { getCalendarEvents } from '../../actions/actions'
 
 
+/**
+ * Displays a calendar interface with events fetched asynchronously.
+ *
+ * Fetches calendar events, manages loading and error states, and renders a calendar view with the retrieved events. Allows users to switch calendar modes and select dates.
+ *
+ * @returns The rendered calendar component with events, or a loading or error message if applicable.
+ */
 export default function CalendarComponent() {
   const [mode, setMode] = useState<Mode>('month')
   const [date, setDate] = useState<Date>(new Date())

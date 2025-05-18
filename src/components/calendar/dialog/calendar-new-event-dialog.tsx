@@ -46,6 +46,13 @@ const formSchema = z
     }
   )
 
+/**
+ * Renders a dialog form for creating a new calendar event.
+ *
+ * Displays a modal dialog with fields for event title, start, and end date/time. Validates input, submits the event to the server, updates the local event list, and provides user feedback via toast notifications.
+ *
+ * @returns The dialog component for creating a new calendar event.
+ */
 export default function CalendarNewEventDialog() {
   const { newEventDialogOpen, setNewEventDialogOpen, date, events, setEvents } =
     useCalendarContext()
