@@ -7,7 +7,7 @@ import { useQuery } from '@tanstack/react-query'
 import { getCalendarEvents } from '../../actions/actions'
 
 
-export default function CalendarDemo() {
+export default function CalendarComponent() {
   const [mode, setMode] = useState<Mode>('month')
   const [date, setDate] = useState<Date>(new Date())
 
