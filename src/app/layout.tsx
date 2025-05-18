@@ -3,6 +3,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { Work_Sans } from "next/font/google";
 import { ToastProvider } from "@/components/ui/toast";
+import QueryProvideR from "../providers/providers";
 
 const ws = Work_Sans({
   subsets: ["latin"],
@@ -80,10 +81,13 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <ToastProvider>
-            {children}
-          </ToastProvider>
+          <QueryProvideR>
+            <ToastProvider>
+              {children}
+            </ToastProvider>
+          </QueryProvideR>
         </ThemeProvider>
+
       </body>
     </html>
   );
