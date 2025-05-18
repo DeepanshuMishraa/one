@@ -2,9 +2,10 @@
 
 import { useState } from 'react'
 import Calendar from './calendar/calendar'
-import { CalendarEvent, Mode } from './calendar/calendar-types'
+import { CalendarEvent, CalendarEventResponse, Mode } from './calendar/calendar-types'
 import { useQuery } from '@tanstack/react-query'
 import { getCalendarEvents } from '../../actions/actions'
+
 
 
 export default function CalendarComponent() {
@@ -20,15 +21,15 @@ export default function CalendarComponent() {
         throw new Error(response.message as string || "Failed to load calendar events");
       }
 
-      return response.events.map((event) => ({
+      return (response.events as CalendarEventResponse[]).map((event) => ({
         id: event.id,
         title: event.summary,
-        description: event.description || undefined,
+        description: event.description,
         start: new Date(event.start),
         end: new Date(event.end),
-        location: event.location || undefined,
-        attendees: event.attendees || undefined,
-        status: event.status || undefined,
+        location: event.location,
+        attendees: event.attendees,
+        status: event.status,
         created: event.created ? new Date(event.created) : undefined,
         updated: event.updated ? new Date(event.updated) : undefined,
       })) as CalendarEvent[];
