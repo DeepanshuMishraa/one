@@ -16,12 +16,23 @@ export type CalendarContextType = CalendarProps & {
   selectedEvent: CalendarEvent | null
   setSelectedEvent: (event: CalendarEvent | null) => void
 }
+
+export type Attendee = {
+  email: string
+  responseStatus?: string
+}
+
 export type CalendarEvent = {
   id: string
   title: string
-  color: string
+  description?: string
   start: Date
   end: Date
+  location?: string
+  attendees?: Attendee[]
+  status?: string
+  created?: Date
+  updated?: Date
 }
 
 export const calendarModes = ['day', 'week', 'month'] as const
