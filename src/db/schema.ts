@@ -53,3 +53,31 @@ export const waitlist = pgTable("waitlist", {
   updatedAt: timestamp("updated_at").notNull(),
   count: integer("count").default(0).notNull(),
 })
+
+
+export const calendar_events = pgTable("calendar_events", {
+  id: text("id").primaryKey(),
+  summary: text("summary").notNull(),
+  description: text("description"),
+  startTime: timestamp("start_time").notNull(),
+  endTime: timestamp("end_time").notNull(),
+  location: text("location"),
+  attendees: text("attendees").default('[]').notNull(),
+  status: text("status").notNull(),
+  event_created_at: timestamp("event_created_at").notNull(),
+  event_updated_at: timestamp("event_updated_at").notNull(),
+  userId: text("user_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+})
+
+
+export const calendarMetadata = pgTable("calendar_metadata", {
+  id: text("id").primaryKey(),
+  summary: text("summary").notNull(),
+  description: text("description"),
+  timeZone: text("time_zone").notNull(),
+  calendarId: text("calendar_id").notNull().references(() => user.id, { onDelete: 'cascade' }),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+})
