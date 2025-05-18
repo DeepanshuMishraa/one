@@ -19,7 +19,6 @@ export const getCalendarEvents = async () => {
 
     const userId = session?.user.id;
 
-    // First check if we have any events in the database
     const latestEvent = await db
       .select()
       .from(calendar_events)
@@ -46,7 +45,6 @@ export const getCalendarEvents = async () => {
 
     const calendar = google.calendar({ version: 'v3', auth: oauth2Client });
 
-    // If we have events, only fetch updates since the last update time
     const updatedMin = latestEvent.length > 0
       ? new Date(latestEvent[0].event_updated_at).toISOString()
       : undefined;
@@ -70,7 +68,7 @@ export const getCalendarEvents = async () => {
       pageToken = response.data.nextPageToken;
     } while (pageToken);
 
-    // Update calendar metadata
+
     const calendarInfo = await calendar.calendars.get({
       calendarId: "primary"
     });
