@@ -5,7 +5,15 @@ import { useEffect, useState } from "react";
 import { twMerge } from "tailwind-merge";
 import clsx from "clsx";
 
-const cn = (...args: any[]) => twMerge(clsx(args));
+const cn = (
+  ...args: (
+    | string
+    | undefined
+    | null
+    | boolean
+    | { [key: string]: boolean | undefined | null }
+  )[]
+) => twMerge(clsx(args));
 
 const digitHeight = 40 + 10; // fontSize (40) + padding (10)
 
@@ -45,7 +53,7 @@ export const Counter = ({
       style={{ fontSize }}
       {...rest}
       className={cn(
-        "flex overflow-hidden rounded px-2 leading-none text-primary font-bold",
+        "text-primary flex overflow-hidden rounded px-2 leading-none font-bold",
         className,
       )}
     >
@@ -92,7 +100,7 @@ interface NumberProps {
 function Number({ mv, number }: NumberProps) {
   const y = useTransform(mv, (latest) => {
     const placeValue = latest % 10;
-    let offset = (10 + number - placeValue) % 10;
+    const offset = (10 + number - placeValue) % 10;
     let pos = offset * digitHeight;
 
     if (offset > 5) {

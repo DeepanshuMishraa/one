@@ -1,7 +1,18 @@
-'use client';
+"use client";
 
 import { motion } from "framer-motion";
-import { Clock, Calendar, AlertCircle, Focus, BarChart3, BrainCircuit, Timer, Coffee, Zap, CheckCircle } from "lucide-react";
+import {
+  Clock,
+  Calendar,
+  AlertCircle,
+  Focus,
+  BarChart3,
+  BrainCircuit,
+  Timer,
+  Coffee,
+  Zap,
+  CheckCircle,
+} from "lucide-react";
 import { format } from "date-fns";
 import { useState } from "react";
 
@@ -17,7 +28,7 @@ export default function FocusPage() {
       time: "10:00 AM",
       duration: "30min",
       priority: "high",
-      type: "meeting"
+      type: "meeting",
     },
     {
       id: 2,
@@ -25,8 +36,8 @@ export default function FocusPage() {
       time: "2:00 PM",
       duration: "1h",
       priority: "medium",
-      type: "meeting"
-    }
+      type: "meeting",
+    },
   ];
 
   const todaysTasks = [
@@ -35,37 +46,42 @@ export default function FocusPage() {
       title: "Prepare presentation",
       deadline: "5:00 PM",
       priority: "high",
-      status: "pending"
+      status: "pending",
     },
     {
       id: 2,
       title: "Review PRs",
       deadline: "4:00 PM",
       priority: "medium",
-      status: "pending"
-    }
+      status: "pending",
+    },
   ];
 
   // Productivity stats
   const productivityStats = [
-    { title: "Focus Time", value: "4h 30m", icon: BrainCircuit, change: "+15%" },
+    {
+      title: "Focus Time",
+      value: "4h 30m",
+      icon: BrainCircuit,
+      change: "+15%",
+    },
     { title: "Tasks Done", value: "12/15", icon: CheckCircle, change: "+20%" },
     { title: "Break Time", value: "1h 15m", icon: Coffee, change: "-5%" },
     { title: "Productivity", value: "85%", icon: Zap, change: "+10%" },
   ];
 
   return (
-    <div className="p-6 h-[calc(100vh-4rem)] overflow-y-auto">
-      <div className="max-w-5xl mx-auto space-y-8">
+    <div className="h-[calc(100vh-4rem)] overflow-y-auto p-6">
+      <div className="mx-auto max-w-5xl space-y-8">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Today's Focus</h1>
+            <h1 className="text-2xl font-bold">Today&apos;s Focus</h1>
             <p className="text-muted-foreground mt-1">
               {format(new Date(), "EEEE, MMMM d")}
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-muted-foreground">
+            <div className="text-muted-foreground flex items-center gap-2">
               <Clock size={16} />
               <span>{format(new Date(), "h:mm a")}</span>
             </div>
@@ -73,10 +89,11 @@ export default function FocusPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setFocusModeActive(!focusModeActive)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ${focusModeActive
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/80"
-                }`}
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 transition-colors ${
+                focusModeActive
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted hover:bg-muted/80"
+              }`}
             >
               <Focus size={18} />
               <span>{focusModeActive ? "Exit Focus" : "Enter Focus"}</span>
@@ -84,25 +101,32 @@ export default function FocusPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {productivityStats.map((stat, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="bg-card rounded-xl border p-4 hover:shadow-lg transition-all"
+              className="bg-card rounded-xl border p-4 transition-all hover:shadow-lg"
             >
               <div className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-primary/10">
+                <div className="bg-primary/10 rounded-lg p-2">
                   <stat.icon size={20} className="text-primary" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">{stat.title}</h3>
+                  <h3 className="text-muted-foreground text-sm font-medium">
+                    {stat.title}
+                  </h3>
                   <div className="flex items-center gap-2">
                     <p className="text-xl font-semibold">{stat.value}</p>
-                    <span className={`text-xs ${stat.change.startsWith('+') ? 'text-green-500' : 'text-red-500'
-                      }`}>
+                    <span
+                      className={`text-xs ${
+                        stat.change.startsWith("+")
+                          ? "text-green-500"
+                          : "text-red-500"
+                      }`}
+                    >
                       {stat.change}
                     </span>
                   </div>
@@ -126,10 +150,11 @@ export default function FocusPage() {
                   <button
                     key={time}
                     onClick={() => setFocusTimer(time)}
-                    className={`px-3 py-1 rounded-lg text-sm ${focusTimer === time
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted hover:bg-muted/80"
-                      }`}
+                    className={`rounded-lg px-3 py-1 text-sm ${
+                      focusTimer === time
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted hover:bg-muted/80"
+                    }`}
                   >
                     {time}m
                   </button>
@@ -139,19 +164,21 @@ export default function FocusPage() {
           </motion.div>
         )}
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid gap-6 lg:grid-cols-2">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="bg-card rounded-xl border p-6 space-y-4"
+            className="bg-card space-y-4 rounded-xl border p-6"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calendar size={20} className="text-primary" />
                 <h2 className="font-semibold">Upcoming Events</h2>
               </div>
-              <span className="text-sm text-muted-foreground">{todaysEvents.length} events</span>
+              <span className="text-muted-foreground text-sm">
+                {todaysEvents.length} events
+              </span>
             </div>
             <div className="space-y-3">
               {todaysEvents.map((event) => (
@@ -159,17 +186,26 @@ export default function FocusPage() {
                   key={event.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  className="bg-muted/50 hover:bg-muted flex items-center gap-4 rounded-lg p-3 transition-colors"
                 >
-                  <div className="min-w-[60px] text-sm font-medium">{event.time}</div>
+                  <div className="min-w-[60px] text-sm font-medium">
+                    {event.time}
+                  </div>
                   <div className="flex-1">
                     <div className="font-medium">{event.title}</div>
-                    <div className="text-sm text-muted-foreground">{event.duration}</div>
+                    <div className="text-muted-foreground text-sm">
+                      {event.duration}
+                    </div>
                   </div>
-                  <div className={`px-2 py-1 rounded text-xs font-medium ${event.priority === "high" ? "bg-red-500/10 text-red-500" :
-                    event.priority === "medium" ? "bg-yellow-500/10 text-yellow-500" :
-                      "bg-green-500/10 text-green-500"
-                    }`}>
+                  <div
+                    className={`rounded px-2 py-1 text-xs font-medium ${
+                      event.priority === "high"
+                        ? "bg-red-500/10 text-red-500"
+                        : event.priority === "medium"
+                          ? "bg-yellow-500/10 text-yellow-500"
+                          : "bg-green-500/10 text-green-500"
+                    }`}
+                  >
                     {event.priority}
                   </div>
                 </motion.div>
@@ -181,14 +217,16 @@ export default function FocusPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.2 }}
-            className="bg-card rounded-xl border p-6 space-y-4"
+            className="bg-card space-y-4 rounded-xl border p-6"
           >
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <AlertCircle size={20} className="text-primary" />
                 <h2 className="font-semibold">Priority Tasks</h2>
               </div>
-              <span className="text-sm text-muted-foreground">{todaysTasks.length} tasks</span>
+              <span className="text-muted-foreground text-sm">
+                {todaysTasks.length} tasks
+              </span>
             </div>
             <div className="space-y-3">
               {todaysTasks.map((task) => (
@@ -196,17 +234,26 @@ export default function FocusPage() {
                   key={task.id}
                   initial={{ opacity: 0, x: -20 }}
                   animate={{ opacity: 1, x: 0 }}
-                  className="flex items-center gap-4 p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors"
+                  className="bg-muted/50 hover:bg-muted flex items-center gap-4 rounded-lg p-3 transition-colors"
                 >
-                  <div className="min-w-[80px] text-sm font-medium">{task.deadline}</div>
+                  <div className="min-w-[80px] text-sm font-medium">
+                    {task.deadline}
+                  </div>
                   <div className="flex-1">
                     <div className="font-medium">{task.title}</div>
-                    <div className="text-sm text-muted-foreground">Due today</div>
+                    <div className="text-muted-foreground text-sm">
+                      Due today
+                    </div>
                   </div>
-                  <div className={`px-2 py-1 rounded text-xs font-medium ${task.priority === "high" ? "bg-red-500/10 text-red-500" :
-                    task.priority === "medium" ? "bg-yellow-500/10 text-yellow-500" :
-                      "bg-green-500/10 text-green-500"
-                    }`}>
+                  <div
+                    className={`rounded px-2 py-1 text-xs font-medium ${
+                      task.priority === "high"
+                        ? "bg-red-500/10 text-red-500"
+                        : task.priority === "medium"
+                          ? "bg-yellow-500/10 text-yellow-500"
+                          : "bg-green-500/10 text-green-500"
+                    }`}
+                  >
                     {task.priority}
                   </div>
                 </motion.div>
@@ -221,25 +268,27 @@ export default function FocusPage() {
           transition={{ duration: 0.4, delay: 0.4 }}
           className="bg-card rounded-xl border p-6"
         >
-          <div className="flex items-center justify-between mb-6">
+          <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BarChart3 size={20} className="text-primary" />
               <h2 className="font-semibold">Time Blocks</h2>
             </div>
-            <button className="text-sm text-primary hover:text-primary/80 transition-colors">
+            <button className="text-primary hover:text-primary/80 text-sm transition-colors">
               Manage blocks
             </button>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
             {Array.from({ length: 4 }).map((_, i) => (
               <motion.div
                 key={i}
                 whileHover={{ scale: 1.02 }}
-                className="bg-muted/50 rounded-lg p-4 text-center hover:bg-muted transition-colors cursor-pointer"
+                className="bg-muted/50 hover:bg-muted cursor-pointer rounded-lg p-4 text-center transition-colors"
               >
-                <div className="text-sm font-medium mb-1">Deep Work Block {i + 1}</div>
-                <div className="text-xs text-muted-foreground">2 hours</div>
-                <div className="mt-2 w-full bg-muted rounded-full h-1">
+                <div className="mb-1 text-sm font-medium">
+                  Deep Work Block {i + 1}
+                </div>
+                <div className="text-muted-foreground text-xs">2 hours</div>
+                <div className="bg-muted mt-2 h-1 w-full rounded-full">
                   <div
                     className="bg-primary h-1 rounded-full"
                     style={{ width: `${Math.random() * 100}%` }}
@@ -252,4 +301,4 @@ export default function FocusPage() {
       </div>
     </div>
   );
-} 
+}
