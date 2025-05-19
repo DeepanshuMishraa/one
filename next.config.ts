@@ -9,6 +9,13 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  rewrites: async () => [
+    //App shell for react router
+    {
+      source: "/((?!api/).*)",
+      destination: "/static-app-shell",
+    },
+  ],
 };
 
 export default nextConfig;

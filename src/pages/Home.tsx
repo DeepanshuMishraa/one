@@ -1,16 +1,14 @@
-'use client'
 import Hero from "@/components/Hero";
 import Appbar from "@/components/Appbar";
 import { useSession } from "@/lib/auth.client";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router";
+
 export default function Home() {
-
   const { data: session } = useSession();
-  const router = useRouter();
-
+  const navigate = useNavigate();
 
   if (session?.user) {
-    router.push('/dashboard')
+    navigate("/dashboard");
   }
 
   return (

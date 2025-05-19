@@ -1,7 +1,7 @@
 "use client";
 
 import { Dispatch, SetStateAction } from "react";
-import Link from "next/link";
+import { Link } from "react-router";
 import { cn } from "@/lib/utils";
 import {
   Calendar,
@@ -16,11 +16,10 @@ import {
   User,
   LogOut,
   UserCircle,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
-
 
 import {
   DropdownMenu,
@@ -48,40 +47,60 @@ interface NavItemProps {
   index?: number;
 }
 
-const NavItem = ({ icon, label, href, isActive, isCollapsed }: NavItemProps) => {
+const NavItem = ({
+  icon,
+  label,
+  href,
+  isActive,
+  isCollapsed,
+}: NavItemProps) => {
   return (
     <Link
-      href={href}
+      to={href}
       className={cn(
-        "group flex items-center gap-3 transition-colors py-1.5",
+        "group flex items-center gap-3 py-1.5 transition-colors",
         isActive
           ? "text-foreground font-medium"
           : "text-muted-foreground hover:text-foreground",
-        isCollapsed ? "justify-center px-0" : "px-3"
+        isCollapsed ? "justify-center px-0" : "px-3",
       )}
     >
       <div className="flex min-w-[24px] items-center justify-center">
         {icon}
       </div>
 
-      {!isCollapsed && (
-        <span className="text-[15px]">{label}</span>
-      )}
+      {!isCollapsed && <span className="text-[15px]">{label}</span>}
     </Link>
   );
 };
 
-export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps) {
+export function Sidebar({
+  isCollapsed,
+  setIsCollapsed,
+  isMobile,
+}: SidebarProps) {
   const pathname = usePathname() || "";
-  const router = useRouter()
+  const router = useRouter();
   const { data: session } = useSession();
 
   const navItems = [
     { icon: <Calendar size={20} />, label: "Calendar", href: "/dashboard" },
-    { icon: <Clock size={20} />, label: "Today's Focus", href: "/dashboard/focus" },
+    {
+      icon: <Clock size={20} />,
+      label: "Today's Focus",
+      href: "/dashboard/focus",
+    },
     { icon: <FileText size={20} />, label: "Notes", href: "/dashboard/notes" },
-    { icon: <MessageSquare size={20} />, label: "Chat", href: "/dashboard/chat" },
-    { icon: <BellRing size={20} />, label: "Reminders", href: "/dashboard/reminders" },
+    {
+      icon: <MessageSquare size={20} />,
+      label: "Chat",
+      href: "/dashboard/chat",
+    },
+    {
+      icon: <BellRing size={20} />,
+      label: "Reminders",
+      href: "/dashboard/reminders",
+    },
   ];
 
   return (
@@ -93,7 +112,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-background/80 backdrop-blur-sm z-30"
+            className="bg-background/80 fixed inset-0 z-30 backdrop-blur-sm"
             onClick={() => setIsCollapsed(true)}
           />
         )}
@@ -104,18 +123,20 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
         animate={{ width: isCollapsed ? 68 : 260 }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen flex flex-col bg-background border-r border-border/40",
-          isCollapsed ? "items-center" : ""
+          "bg-background border-border/40 fixed top-0 left-0 z-40 flex h-screen flex-col border-r",
+          isCollapsed ? "items-center" : "",
         )}
       >
-        <div className={cn(
-          "flex h-14 items-center border-b border-border/40",
-          isCollapsed ? "justify-center w-full" : "px-6 justify-between"
-        )}>
+        <div
+          className={cn(
+            "border-border/40 flex h-14 items-center border-b",
+            isCollapsed ? "w-full justify-center" : "justify-between px-6",
+          )}
+        >
           {!isCollapsed ? (
             <h1 className="text-xl font-bold">ONE</h1>
           ) : (
-            <div className="w-8 h-8 flex items-center justify-center rounded-full bg-foreground/10">
+            <div className="bg-foreground/10 flex h-8 w-8 items-center justify-center rounded-full">
               <span className="text-foreground text-lg font-bold">1</span>
             </div>
           )}
@@ -123,7 +144,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
           {!isCollapsed && (
             <button
               onClick={() => setIsCollapsed(true)}
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10"
+              className="bg-foreground/10 flex h-8 w-8 items-center justify-center rounded-full"
               aria-label="Collapse sidebar"
             >
               <ChevronLeft size={16} className="text-muted-foreground" />
@@ -134,7 +155,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
         {isCollapsed && (
           <button
             onClick={() => setIsCollapsed(false)}
-            className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10 my-3"
+            className="bg-foreground/10 my-3 flex h-8 w-8 items-center justify-center rounded-full"
             aria-label="Expand sidebar"
           >
             <ChevronRight size={16} className="text-foreground" />
@@ -142,49 +163,54 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
         )}
 
         {/* Navigation */}
-        <div className="flex flex-col flex-grow justify-between py-3">
-          <div className={cn(
-            "flex flex-col",
-            isCollapsed ? "items-center space-y-4" : "space-y-1"
-          )}>
+        <div className="flex flex-grow flex-col justify-between py-3">
+          <div
+            className={cn(
+              "flex flex-col",
+              isCollapsed ? "items-center space-y-4" : "space-y-1",
+            )}
+          >
             {navItems.map((item, idx) => (
               <NavItem
                 key={idx}
                 icon={item.icon}
                 label={item.label}
                 href={item.href}
-                isActive={pathname.includes(item.href.split('/').pop() || '')}
+                isActive={pathname.includes(item.href.split("/").pop() || "")}
                 isCollapsed={isCollapsed}
               />
             ))}
           </div>
 
           {/* Footer Nav */}
-          <div className={cn(
-            "flex flex-col",
-            isCollapsed ? "items-center" : ""
-          )}>
+          <div
+            className={cn("flex flex-col", isCollapsed ? "items-center" : "")}
+          >
             {/* Settings */}
             <NavItem
               icon={<Settings size={20} />}
               label="Settings"
               href="/dashboard/settings"
-              isActive={pathname.includes('settings')}
+              isActive={pathname.includes("settings")}
               isCollapsed={isCollapsed}
             />
 
             {/* User Account with Dropdown */}
-            <div className={cn(
-              "mt-3 border-t border-border/40 pt-3",
-              isCollapsed ? "w-full flex justify-center" : "px-3"
-            )}>
+            <div
+              className={cn(
+                "border-border/40 mt-3 border-t pt-3",
+                isCollapsed ? "flex w-full justify-center" : "px-3",
+              )}
+            >
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className={cn(
-                    "flex items-center gap-3 cursor-pointer rounded-lg hover:bg-accent/10 transition-colors w-full",
-                    isCollapsed ? "justify-center p-2" : "p-2"
-                  )}>
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-foreground/10">
+                  <button
+                    className={cn(
+                      "hover:bg-accent/10 flex w-full cursor-pointer items-center gap-3 rounded-lg transition-colors",
+                      isCollapsed ? "justify-center p-2" : "p-2",
+                    )}
+                  >
+                    <div className="bg-foreground/10 flex h-8 w-8 items-center justify-center rounded-full">
                       {session?.user?.image ? (
                         <Image
                           src={session.user.image}
@@ -200,8 +226,12 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
 
                     {!isCollapsed && (
                       <div className="flex flex-col items-start">
-                        <span className="text-sm font-medium">{session?.user.name}</span>
-                        <span className="text-xs text-muted-foreground">View Profile</span>
+                        <span className="text-sm font-medium">
+                          {session?.user.name}
+                        </span>
+                        <span className="text-muted-foreground text-xs">
+                          View Profile
+                        </span>
                       </div>
                     )}
                   </button>
@@ -222,15 +252,18 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
                     <span>Settings</span>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={async () => {
-                    await signOut({
-                      fetchOptions: {
-                        onSuccess: () => {
-                          router.push("/login")
-                        }
-                      }
-                    })
-                  }} className="text-destructive">
+                  <DropdownMenuItem
+                    onClick={async () => {
+                      await signOut({
+                        fetchOptions: {
+                          onSuccess: () => {
+                            router.push("/login");
+                          },
+                        },
+                      });
+                    }}
+                    className="text-destructive"
+                  >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Log out</span>
                   </DropdownMenuItem>
@@ -244,7 +277,7 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
       {isMobile && isCollapsed && (
         <button
           onClick={() => setIsCollapsed(false)}
-          className="fixed bottom-8 left-6 z-50 p-3 rounded-full bg-primary text-primary-foreground shadow-md hover:shadow-lg active:scale-95 transition-all"
+          className="bg-primary text-primary-foreground fixed bottom-8 left-6 z-50 rounded-full p-3 shadow-md transition-all hover:shadow-lg active:scale-95"
           aria-label="Open sidebar"
         >
           <Menu size={18} />
@@ -252,4 +285,4 @@ export function Sidebar({ isCollapsed, setIsCollapsed, isMobile }: SidebarProps)
       )}
     </>
   );
-} 
+}
