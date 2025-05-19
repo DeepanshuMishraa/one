@@ -1,16 +1,16 @@
-'use client'
+"use client";
 
-import { zodResolver } from '@hookform/resolvers/zod'
-import { useForm } from 'react-hook-form'
-import { z } from 'zod'
-import { useEffect } from 'react'
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog";
 import {
   Form,
   FormControl,
@@ -18,13 +18,12 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from '@/components/ui/form'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { useCalendarContext } from '../calendar-context'
-import { format } from 'date-fns'
-import { DateTimePicker } from '@/components/form/date-time-picker'
-import { ColorPicker } from '@/components/form/color-picker'
+} from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useCalendarContext } from "../calendar-context";
+import { format } from "date-fns";
+import { DateTimePicker } from "@/components/form/date-time-picker";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -35,38 +34,41 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
   AlertDialogTrigger,
-} from '@/components/ui/alert-dialog'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { updateCalendarEvent, deleteCalendarEvent } from '../../../../actions/actions'
-import { useToastManager } from '@/components/ui/toast'
-import { Loader2 } from 'lucide-react'
-import { CalendarEvent } from '../calendar-types'
+} from "@/components/ui/alert-dialog";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  updateCalendarEvent,
+  deleteCalendarEvent,
+} from "../../../../actions/actions";
+import { useToastManager } from "@/components/ui/toast";
+import { Loader2 } from "lucide-react";
+import { CalendarEvent } from "../calendar-types";
 
 const formSchema = z
   .object({
-    title: z.string().min(1, 'Title is required'),
+    title: z.string().min(1, "Title is required"),
     start: z.string().refine((val) => !isNaN(Date.parse(val)), {
-      message: 'Invalid start date',
+      message: "Invalid start date",
     }),
     end: z.string().refine((val) => !isNaN(Date.parse(val)), {
-      message: 'Invalid end date',
+      message: "Invalid end date",
     }),
   })
   .refine(
     (data) => {
       try {
-        const start = new Date(data.start)
-        const end = new Date(data.end)
-        return end >= start
+        const start = new Date(data.start);
+        const end = new Date(data.end);
+        return end >= start;
       } catch {
-        return false
+        return false;
       }
     },
     {
-      message: 'End time must be after start time',
-      path: ['end'],
-    }
-  )
+      message: "End time must be after start time",
+      path: ["end"],
+    },
+  );
 
 export default function CalendarManageEventDialog() {
   const {
@@ -76,19 +78,19 @@ export default function CalendarManageEventDialog() {
     setSelectedEvent,
     events,
     setEvents,
-  } = useCalendarContext()
+  } = useCalendarContext();
 
-  const toast = useToastManager()
-  const queryClient = useQueryClient()
+  const toast = useToastManager();
+  const queryClient = useQueryClient();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      title: '',
-      start: '',
-      end: '',
+      title: "",
+      start: "",
+      end: "",
     },
-  })
+  });
 
   useEffect(() => {
     if (selectedEvent) {
@@ -96,32 +98,31 @@ export default function CalendarManageEventDialog() {
         title: selectedEvent.title,
         start: format(selectedEvent.start, "yyyy-MM-dd'T'HH:mm"),
         end: format(selectedEvent.end, "yyyy-MM-dd'T'HH:mm"),
-
-      })
+      });
     }
-  }, [selectedEvent, form])
+  }, [selectedEvent, form]);
 
   const updateMutation = useMutation({
     mutationFn: async (values: z.infer<typeof formSchema>) => {
-      if (!selectedEvent) return
+      if (!selectedEvent) return;
 
       const updatedEvent = {
         ...selectedEvent,
         title: values.title,
         start: new Date(values.start),
         end: new Date(values.end),
-      }
+      };
 
-      const response = await updateCalendarEvent(updatedEvent)
+      const response = await updateCalendarEvent(updatedEvent);
 
       if (response.error) {
-        throw new Error(response.message as string)
+        throw new Error(response.message as string);
       }
 
-      return response.event
+      return response.event;
     },
     onSuccess: (data) => {
-      if (!selectedEvent || !data) return
+      if (!selectedEvent || !data) return;
 
       const updatedEvent: CalendarEvent = {
         id: data.id || selectedEvent.id,
@@ -129,74 +130,76 @@ export default function CalendarManageEventDialog() {
         description: data.description || undefined,
         start: new Date(data.start?.dateTime || selectedEvent.start),
         end: new Date(data.end?.dateTime || selectedEvent.end),
-      }
+      };
 
       setEvents(
         events.map((event) =>
-          event.id === selectedEvent.id ? updatedEvent : event
-        )
-      )
+          event.id === selectedEvent.id ? updatedEvent : event,
+        ),
+      );
 
       toast.add({
-        title: 'Success',
-        description: 'Event updated successfully',
-      })
+        title: "Success",
+        description: "Event updated successfully",
+      });
 
-      handleClose()
+      handleClose();
     },
     onError: (error) => {
       toast.add({
-        title: 'Error',
-        description: error.message || 'Failed to update event',
-      })
+        title: "Error",
+        description: error.message || "Failed to update event",
+      });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendar-events'] })
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
     },
-  })
+  });
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
       if (!selectedEvent) {
-        throw new Error('No event selected')
+        throw new Error("No event selected");
       }
 
-      const response = await deleteCalendarEvent(selectedEvent.id)
+      const response = await deleteCalendarEvent(selectedEvent.id);
 
       if (response.error) {
-        throw new Error(response.message as string || 'Failed to delete event')
+        throw new Error(
+          (response.message as string) || "Failed to delete event",
+        );
       }
 
-      return response
+      return response;
     },
     onSuccess: () => {
-      if (!selectedEvent) return
-      setEvents(events.filter((event) => event.id !== selectedEvent.id))
+      if (!selectedEvent) return;
+      setEvents(events.filter((event) => event.id !== selectedEvent.id));
 
       toast.add({
-        title: 'Success',
-        description: 'Event deleted successfully',
-      })
-      handleClose()
+        title: "Success",
+        description: "Event deleted successfully",
+      });
+      handleClose();
     },
     onError: (error) => {
       toast.add({
-        title: 'Error',
-        description: error.message || 'Failed to delete event',
-      })
+        title: "Error",
+        description: error.message || "Failed to delete event",
+      });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['calendar-events'] })
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
     },
-  })
+  });
 
   function handleClose() {
-    setManageEventDialogOpen(false)
-    setSelectedEvent(null)
-    form.reset()
+    setManageEventDialogOpen(false);
+    setSelectedEvent(null);
+    form.reset();
   }
 
-  const isLoading = updateMutation.isPending || deleteMutation.isPending
+  const isLoading = updateMutation.isPending || deleteMutation.isPending;
 
   return (
     <Dialog open={manageEventDialogOpen} onOpenChange={handleClose}>
@@ -206,7 +209,9 @@ export default function CalendarManageEventDialog() {
         </DialogHeader>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit((values) => updateMutation.mutate(values))}
+            onSubmit={form.handleSubmit((values) =>
+              updateMutation.mutate(values),
+            )}
             className="space-y-4"
           >
             <FormField
@@ -250,7 +255,6 @@ export default function CalendarManageEventDialog() {
                 </FormItem>
               )}
             />
-
 
             <DialogFooter className="flex justify-between gap-2">
               <AlertDialog>
@@ -299,5 +303,5 @@ export default function CalendarManageEventDialog() {
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
