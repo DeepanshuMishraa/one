@@ -1,5 +1,3 @@
-"use client";
-
 import { useState, useEffect } from "react";
 import { Sidebar } from "@/components/ui/sidebar";
 
@@ -36,11 +34,12 @@ export default function DashboardLayout({
         isMobile={isMobile}
       />
       <div
-        className={`flex-1 transition-all duration-300 ease-in-out ${isCollapsed ? "ml-[60px]" : "ml-[250px]"
-          } overflow-y-auto`}
+        className={`flex-1 transition-all duration-300 ease-in-out ${
+          isCollapsed ? "ml-[60px]" : "ml-[250px]"
+        } overflow-y-auto`}
       >
         {children}
       </div>
     </div>
   );
-} 
+}

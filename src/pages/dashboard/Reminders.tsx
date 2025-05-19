@@ -1,7 +1,20 @@
-'use client';
-
 import { motion } from "framer-motion";
-import { Bell, Plus, Clock, Calendar, CheckCircle2, AlertTriangle, Filter, BarChart3, ChevronDown, Trash2, Archive, Star, MoreVertical, User } from "lucide-react";
+import {
+  Bell,
+  Plus,
+  Clock,
+  Calendar,
+  CheckCircle2,
+  AlertTriangle,
+  Filter,
+  BarChart3,
+  ChevronDown,
+  Trash2,
+  Archive,
+  Star,
+  MoreVertical,
+  User,
+} from "lucide-react";
 import { useState } from "react";
 
 export default function RemindersPage() {
@@ -27,7 +40,7 @@ export default function RemindersPage() {
       status: "pending",
       category: "work",
       assignee: "You",
-      progress: 65
+      progress: 65,
     },
     {
       id: 2,
@@ -38,7 +51,7 @@ export default function RemindersPage() {
       status: "pending",
       category: "work",
       assignee: "Team",
-      progress: 30
+      progress: 30,
     },
     {
       id: 3,
@@ -49,8 +62,8 @@ export default function RemindersPage() {
       status: "pending",
       category: "project",
       assignee: "You",
-      progress: 0
-    }
+      progress: 0,
+    },
   ];
 
   const getTimeLeft = (dueDate: string) => {
@@ -79,31 +92,31 @@ export default function RemindersPage() {
   };
 
   const handleSelectReminder = (id: number) => {
-    setSelectedReminders(prev =>
-      prev.includes(id)
-        ? prev.filter(r => r !== id)
-        : [...prev, id]
+    setSelectedReminders((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
     );
   };
 
   return (
-    <div className="p-6 h-[calc(100vh-4rem)] overflow-y-auto">
-      <div className="max-w-5xl mx-auto space-y-8">
-          <div className="flex items-center justify-between">
+    <div className="h-[calc(100vh-4rem)] overflow-y-auto p-6">
+      <div className="mx-auto max-w-5xl space-y-8">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Bell className="h-8 w-8 text-primary" />
+            <Bell className="text-primary h-8 w-8" />
             <div>
               <h1 className="text-2xl font-bold">Reminders</h1>
-              <p className="text-muted-foreground">Keep track of important tasks and deadlines</p>
+              <p className="text-muted-foreground">
+                Keep track of important tasks and deadlines
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {selectedReminders.length > 0 && (
-              <div className="flex items-center gap-2 pr-2 border-r">
+              <div className="flex items-center gap-2 border-r pr-2">
                 <motion.button
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="p-2 rounded-lg hover:bg-muted/80 transition-colors"
+                  className="hover:bg-muted/80 rounded-lg p-2 transition-colors"
                   title="Archive selected"
                 >
                   <Archive size={18} />
@@ -111,7 +124,7 @@ export default function RemindersPage() {
                 <motion.button
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  className="p-2 rounded-lg hover:bg-muted/80 transition-colors text-red-500"
+                  className="hover:bg-muted/80 rounded-lg p-2 text-red-500 transition-colors"
                   title="Delete selected"
                 >
                   <Trash2 size={18} />
@@ -121,7 +134,7 @@ export default function RemindersPage() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 flex items-center gap-2 rounded-lg px-4 py-2 transition-colors"
             >
               <Plus size={18} />
               <span>Add Reminder</span>
@@ -129,7 +142,7 @@ export default function RemindersPage() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
           {stats.map((stat, index) => (
             <motion.div
               key={index}
@@ -139,8 +152,8 @@ export default function RemindersPage() {
               className="bg-card rounded-xl border p-4"
             >
               <div className="text-2xl font-bold">{stat.value}</div>
-              <div className="text-sm text-muted-foreground">{stat.title}</div>
-              <div className="text-xs text-primary mt-1">{stat.change}</div>
+              <div className="text-muted-foreground text-sm">{stat.title}</div>
+              <div className="text-primary mt-1 text-xs">{stat.change}</div>
             </motion.div>
           ))}
         </div>
@@ -151,21 +164,22 @@ export default function RemindersPage() {
               <button
                 key={f}
                 onClick={() => setFilter(f)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${filter === f
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-muted/50"
-                  }`}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                  filter === f
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-muted/50"
+                }`}
               >
                 {f.charAt(0).toUpperCase() + f.slice(1)}
               </button>
             ))}
           </div>
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-muted/50 transition-colors">
+            <button className="hover:bg-muted/50 flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors">
               <Filter size={16} />
               <span className="text-sm">Filter</span>
             </button>
-            <button className="flex items-center gap-2 px-3 py-2 rounded-lg border hover:bg-muted/50 transition-colors">
+            <button className="hover:bg-muted/50 flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors">
               <BarChart3 size={16} />
               <span className="text-sm">Sort</span>
               <ChevronDown size={14} />
@@ -180,10 +194,10 @@ export default function RemindersPage() {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: index * 0.1 }}
-              className="relative flex gap-4 items-start group"
+              className="group relative flex items-start gap-4"
             >
               {index !== reminders.length - 1 && (
-                <div className="absolute left-[15px] top-[28px] w-[2px] h-[calc(100%+1.5rem)] bg-border" />
+                <div className="bg-border absolute top-[28px] left-[15px] h-[calc(100%+1.5rem)] w-[2px]" />
               )}
 
               <div className="flex flex-col items-center gap-2">
@@ -191,53 +205,71 @@ export default function RemindersPage() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => handleSelectReminder(reminder.id)}
-                  className={`w-5 h-5 rounded border-2 transition-colors ${selectedReminders.includes(reminder.id)
-                    ? "bg-primary border-primary"
-                    : "border-muted-foreground hover:border-primary"
-                    }`}
+                  className={`h-5 w-5 rounded border-2 transition-colors ${
+                    selectedReminders.includes(reminder.id)
+                      ? "bg-primary border-primary"
+                      : "border-muted-foreground hover:border-primary"
+                  }`}
                 >
                   {selectedReminders.includes(reminder.id) && (
-                    <CheckCircle2 size={16} className="text-primary-foreground" />
+                    <CheckCircle2
+                      size={16}
+                      className="text-primary-foreground"
+                    />
                   )}
                 </motion.button>
-                <div className={`relative z-10 rounded-full p-1 ${reminder.urgency === "high"
-                  ? "bg-red-500/10"
-                  : reminder.urgency === "medium"
-                    ? "bg-yellow-500/10"
-                    : "bg-green-500/10"
-                  }`}>
-                  <div className={`w-6 h-6 rounded-full border-2 ${reminder.urgency === "high"
-                    ? "border-red-500"
-                    : reminder.urgency === "medium"
-                      ? "border-yellow-500"
-                      : "border-green-500"
-                    }`} />
+                <div
+                  className={`relative z-10 rounded-full p-1 ${
+                    reminder.urgency === "high"
+                      ? "bg-red-500/10"
+                      : reminder.urgency === "medium"
+                        ? "bg-yellow-500/10"
+                        : "bg-green-500/10"
+                  }`}
+                >
+                  <div
+                    className={`h-6 w-6 rounded-full border-2 ${
+                      reminder.urgency === "high"
+                        ? "border-red-500"
+                        : reminder.urgency === "medium"
+                          ? "border-yellow-500"
+                          : "border-green-500"
+                    }`}
+                  />
                 </div>
               </div>
 
-              <div className="flex-1 bg-card rounded-xl border p-4 group-hover:shadow-lg transition-all">
+              <div className="bg-card flex-1 rounded-xl border p-4 transition-all group-hover:shadow-lg">
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
-                    <h3 className="font-medium flex items-center gap-2">
+                    <h3 className="flex items-center gap-2 font-medium">
                       {reminder.title}
                       {reminder.urgency === "high" && (
                         <AlertTriangle size={14} className="text-red-500" />
                       )}
                     </h3>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-muted-foreground text-sm">
                       {reminder.description}
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-xs font-medium ${getUrgencyColor(reminder.urgency)}`}>
+                    <span
+                      className={`text-xs font-medium ${getUrgencyColor(reminder.urgency)}`}
+                    >
                       {reminder.urgency.toUpperCase()}
                     </span>
                     <div className="flex items-center gap-1">
-                      <button className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-muted transition-colors">
-                        <Star size={14} className="text-muted-foreground hover:text-yellow-500 transition-colors" />
+                      <button className="hover:bg-muted rounded-md p-1 opacity-0 transition-colors group-hover:opacity-100">
+                        <Star
+                          size={14}
+                          className="text-muted-foreground transition-colors hover:text-yellow-500"
+                        />
                       </button>
-                      <button className="opacity-0 group-hover:opacity-100 p-1 rounded-md hover:bg-muted transition-colors">
-                        <MoreVertical size={14} className="text-muted-foreground" />
+                      <button className="hover:bg-muted rounded-md p-1 opacity-0 transition-colors group-hover:opacity-100">
+                        <MoreVertical
+                          size={14}
+                          className="text-muted-foreground"
+                        />
                       </button>
                     </div>
                   </div>
@@ -245,19 +277,19 @@ export default function RemindersPage() {
 
                 <div className="mt-4 space-y-3">
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <div className="text-muted-foreground flex items-center justify-between text-xs">
                       <span>Progress</span>
                       <span>{reminder.progress}%</span>
                     </div>
-                    <div className="w-full h-1 bg-muted rounded-full overflow-hidden">
+                    <div className="bg-muted h-1 w-full overflow-hidden rounded-full">
                       <div
-                        className="h-full bg-primary rounded-full transition-all duration-500"
+                        className="bg-primary h-full rounded-full transition-all duration-500"
                         style={{ width: `${reminder.progress}%` }}
                       />
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                  <div className="text-muted-foreground flex items-center gap-4 text-sm">
                     <div className="flex items-center gap-1">
                       <Clock size={14} />
                       <span>{getTimeLeft(reminder.due)}</span>
@@ -265,11 +297,11 @@ export default function RemindersPage() {
                     <div className="flex items-center gap-1">
                       <Calendar size={14} />
                       <span>
-                        {new Date(reminder.due).toLocaleDateString('en-US', {
-                          month: 'short',
-                          day: 'numeric',
-                          hour: 'numeric',
-                          minute: 'numeric'
+                        {new Date(reminder.due).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "numeric",
                         })}
                       </span>
                     </div>
@@ -292,4 +324,4 @@ export default function RemindersPage() {
       </div>
     </div>
   );
-} 
+}

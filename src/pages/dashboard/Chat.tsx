@@ -5,5 +5,5 @@ export default function Chat() {
     <>
       <AiChat />
     </>
-  )
+  );
 }

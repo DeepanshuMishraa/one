@@ -19,7 +19,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { Menu } from "lucide-react";
 import { useState } from "react";
-import Link from "next/link";
+import { Link } from "react-router";
 import {
   IconBrandGithub,
   IconBrandTwitter,
@@ -85,11 +85,7 @@ export default function Appbar() {
       <header className="fixed z-50 hidden w-full items-center justify-center px-4 pt-6 md:flex">
         <nav className="border-input/50 bg-popover flex w-full max-w-3xl items-center justify-between gap-2 rounded-xl border-t p-2 px-4">
           <div className="flex items-center gap-6">
-            <Link
-              prefetch
-              href="/"
-              className="flex h-[40px] items-center justify-center"
-            >
+            <Link to="/" className="flex h-[40px] items-center justify-center">
               <Image
                 src="/logo.svg"
                 alt="One"
@@ -159,14 +155,14 @@ export default function Appbar() {
                 Logout
               </Button>
             ) : (
-              <Link prefetch href="/login">
+              <Link to="/login">
                 <Button variant="ghost" className="h-8">
                   Sign in
                 </Button>
               </Link>
             )}
 
-            <Link target="_blank" prefetch href="/contact">
+            <Link target="_blank" to="/contact">
               <Button className="h-8 font-medium">Contact Us</Button>
             </Link>
           </div>
@@ -216,7 +212,7 @@ export default function Appbar() {
                   Logout
                 </Button>
               ) : (
-                <Link prefetch href="/login">
+                <Link to="/login">
                   <Button variant="outline" className="w-24">
                     Sign in
                   </Button>
@@ -230,9 +226,8 @@ export default function Appbar() {
                 </h4>
                 {aboutLinks.map((link) => (
                   <Link
-                    prefetch
                     key={link.title}
-                    href={link.href}
+                    to={link.href}
                     className="hover:text-primary block py-2 text-sm font-medium"
                   >
                     {link.title}
@@ -241,8 +236,7 @@ export default function Appbar() {
               </div>
               <Link
                 target="_blank"
-                prefetch
-                href="/contact"
+                to="/contact"
                 className="hover:text-primary block py-2 text-sm font-medium"
               >
                 Contact Us
@@ -253,7 +247,7 @@ export default function Appbar() {
               {resources.map((resource) => (
                 <Link
                   key={resource.title}
-                  href={resource.href}
+                  to={resource.href}
                   target="_blank"
                   className="flex items-center transition-opacity hover:opacity-80"
                 >
