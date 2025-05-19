@@ -28,7 +28,7 @@ import {
 } from "@tabler/icons-react";
 import Image from "next/image";
 import { signOut, useSession } from "@/lib/auth.client";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router";
 const resources = [
   {
     title: "GitHub",
@@ -77,7 +77,7 @@ const aboutLinks = [
 export default function Appbar() {
   const [open, setOpen] = useState(false);
   const { data: session } = useSession();
-  const router = useRouter();
+  const navigate = useNavigate();
 
   return (
     <>
@@ -144,7 +144,7 @@ export default function Appbar() {
                   await signOut({
                     fetchOptions: {
                       onSuccess: () => {
-                        router.push("/login");
+                        navigate("/login");
                       },
                     },
                   });
@@ -203,7 +203,7 @@ export default function Appbar() {
                     signOut({
                       fetchOptions: {
                         onSuccess: () => {
-                          router.push("/login");
+                          navigate("/login");
                         },
                       },
                     });

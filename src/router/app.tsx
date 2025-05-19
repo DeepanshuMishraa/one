@@ -19,7 +19,9 @@ import "../app/globals.css";
 import NotFound from "@/pages/ErrorPage";
 import Loading, { SuspenseLoading } from "@/pages/Loading";
 import { Suspense } from "react";
-
+import AboutPage from "@/pages/About";
+import PrivacyPolicy from "@/pages/PrivacyPolicy";
+import TermsOfService from "@/pages/TOS";
 export default function App() {
   return <RouterProvider router={router} />;
 }
@@ -64,6 +66,18 @@ const router = createBrowserRouter([
       {
         path: "/login",
         element: <LoginPage />,
+      },
+      {
+        path: "/about",
+        element: <AboutPage />,
+      },
+      {
+        path: "/privacy",
+        element: <PrivacyPolicy />,
+      },
+      {
+        path: "/terms",
+        element: <TermsOfService />,
       },
       {
         path: "/dashboard",
