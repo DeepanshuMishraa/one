@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { RainbowButton } from "./ui/rainbow-button";
 import { Mockup } from "./ui/mockup";
 import { StarsBackground } from "./ui/stars";
@@ -21,7 +21,7 @@ export default function Hero() {
         const res = await axios.get("/api/waitlist");
         setCount(res.data.count);
       } catch (error) {
-        console.error("Error fetching waitlist count", error);
+        return error;
       }
     };
     fetchCount();
@@ -38,48 +38,51 @@ export default function Hero() {
         toast.add({
           title: "Email added to waitlist",
           description: "You will be notified when we launch",
-          type: "success"
         });
         setEmail("");
         setCount(res.data.count);
       }
     } catch (error: any) {
-      console.error("Error adding email to waitlist", error);
       if (error.response?.status === 400) {
         toast.add({
           title: "Email already on waitlist",
           type: "warning",
-          description: "This email has already been registered for early access"
+          description:
+            "This email has already been registered for early access",
         });
       } else {
         toast.add({
           title: "Error adding email",
           description: "Something went wrong. Please try again.",
-          
         });
       }
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
     <>
-      <StarsBackground className="min-h-[100vh] lg:aspect-16/9 flex items-center justify-center">
+      <StarsBackground className="flex min-h-[100vh] items-center justify-center lg:aspect-16/9">
         {/* Mobile and tablet layout (up to lg breakpoint) */}
-        <div className="flex flex-col items-center justify-center lg:hidden space-y-4 sm:space-y-5 md:space-y-6 px-4 sm:px-6 py-10 sm:py-16 w-full max-w-7xl mx-auto">
-          <RainbowButton size="lg" className="rounded-full text-xs sm:text-sm">Early Access</RainbowButton>
+        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-center space-y-4 px-4 py-10 sm:space-y-5 sm:px-6 sm:py-16 md:space-y-6 lg:hidden">
+          <RainbowButton size="lg" className="rounded-full text-xs sm:text-sm">
+            Early Access
+          </RainbowButton>
 
-          <h1 className="font-bold text-3xl sm:text-4xl md:text-5xl text-center mt-4 sm:mt-6">
+          <h1 className="mt-4 text-center text-3xl font-bold sm:mt-6 sm:text-4xl md:text-5xl">
             Talk to your calendar
           </h1>
 
-          <p className="text-sm sm:text-base md:text-lg text-gray-300 text-center max-w-xl mx-auto">
-            Add events, move meetings, and get summaries — all with a simple message.
-            <span className="hidden sm:inline"><br /> No more clicking around.</span>
+          <p className="mx-auto max-w-xl text-center text-sm text-gray-300 sm:text-base md:text-lg">
+            Add events, move meetings, and get summaries — all with a simple
+            message.
+            <span className="hidden sm:inline">
+              <br /> No more clicking around.
+            </span>
           </p>
 
-          <div className="relative w-full max-w-[85%] sm:max-w-md mt-2 sm:mt-4">
+          <div className="relative mt-2 w-full max-w-[85%] sm:mt-4 sm:max-w-md">
             <Input
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -88,19 +91,27 @@ export default function Hero() {
             />
             <button
               onClick={() => handleSubmit()}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 transition-colors hover:text-white"
               disabled={isLoading}
             >
               <ArrowRight size={20} />
             </button>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center gap-1 sm:gap-2 mt-2 sm:mt-4">
-            <Counter start={count} end={count} duration={2} fontSize={14} className="bg-orange-500 text-white font-bold rounded-none sm:text-base md:text-lg" />
-            <p className="text-sm sm:text-base md:text-lg font-mono">users have already signed up</p>
+          <div className="mt-2 flex flex-col items-center gap-1 sm:mt-4 sm:flex-row sm:gap-2">
+            <Counter
+              start={count}
+              end={count}
+              duration={2}
+              fontSize={14}
+              className="rounded-none bg-orange-500 font-bold text-white sm:text-base md:text-lg"
+            />
+            <p className="font-mono text-sm sm:text-base md:text-lg">
+              users have already signed up
+            </p>
           </div>
 
-          <div className="py-4 sm:py-6 w-full">
+          <div className="w-full py-4 sm:py-6">
             <Mockup
               src="/Hero.png"
               alt="One-Hero"
@@ -112,15 +123,17 @@ export default function Hero() {
         </div>
 
         {/* Original desktop layout (lg breakpoint and above) */}
-        <div className="hidden lg:flex flex-col items-center justify-center space-y-6 mt-110">
-          <RainbowButton size="lg" className="rounded-full">Early Access</RainbowButton>
+        <div className="mt-110 hidden flex-col items-center justify-center space-y-6 lg:flex">
+          <RainbowButton size="lg" className="rounded-full">
+            Early Access
+          </RainbowButton>
 
-          <h1 className="font-bold text-6xl">
-            Talk to your calendar
-          </h1>
+          <h1 className="text-6xl font-bold">Talk to your calendar</h1>
 
-          <p className="text-xl text-gray-300 text-center">
-            Add events, move meetings, and get summaries — all with a simple message.<br />
+          <p className="text-center text-xl text-gray-300">
+            Add events, move meetings, and get summaries — all with a simple
+            message.
+            <br />
             No more clicking around.
           </p>
 
@@ -133,7 +146,7 @@ export default function Hero() {
             />
             <button
               onClick={() => handleSubmit()}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-white transition-colors"
+              className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 transition-colors hover:text-white"
               disabled={isLoading}
             >
               <ArrowRight size={20} />
@@ -141,20 +154,21 @@ export default function Hero() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Counter start={count} end={count} duration={2} fontSize={16} className="bg-orange-500 text-white font-bold rounded-none" />
-            <p className="text-xl font-mono">users have already signed up</p>
+            <Counter
+              start={count}
+              end={count}
+              duration={2}
+              fontSize={16}
+              className="rounded-none bg-orange-500 font-bold text-white"
+            />
+            <p className="font-mono text-xl">users have already signed up</p>
           </div>
 
-          <div className="py-8 w-full">
-            <Mockup
-              src="/Hero.png"
-              alt="One-Hero"
-              width={1203}
-              height={753}
-            />
+          <div className="w-full py-8">
+            <Mockup src="/Hero.png" alt="One-Hero" width={1203} height={753} />
           </div>
         </div>
       </StarsBackground>
     </>
-  )
+  );
 }
