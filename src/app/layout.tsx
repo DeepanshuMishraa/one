@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
-import { Work_Sans } from "next/font/google";
+import { Raleway } from "next/font/google";
 import { ToastProvider } from "@/components/ui/toast";
 import QueryProvideR from "../providers/providers";
 
-const ws = Work_Sans({
+const raleway = Raleway({
   subsets: ["latin"],
-  variable: "--font-ws",
 });
 
 export const metadata: Metadata = {
@@ -75,7 +74,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${ws.className} antialiased`}>
+      <body className={`${raleway.className} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
