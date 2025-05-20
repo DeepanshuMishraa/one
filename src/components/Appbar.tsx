@@ -166,7 +166,7 @@ export default function Appbar() {
               </Link>
             )}
 
-            <Link target="_blank" prefetch href="/contact">
+            <Link target="_blank" prefetch href="https://x.com/Deepanshudipxsy">
               <Button className="h-8 font-medium">Contact Us</Button>
             </Link>
           </div>
@@ -242,7 +242,7 @@ export default function Appbar() {
               <Link
                 target="_blank"
                 prefetch
-                href="/contact"
+                href="https://x.com/Deepanshudipxsy"
                 className="hover:text-primary block py-2 text-sm font-medium"
               >
                 Contact Us

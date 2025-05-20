@@ -8,7 +8,7 @@ import QueryProvideR from "../providers/providers";
 const ws = Work_Sans({
   subsets: ["latin"],
   variable: "--font-ws",
-})
+});
 
 export const metadata: Metadata = {
   title: "One",
@@ -26,10 +26,13 @@ export const metadata: Metadata = {
         width: 800,
         height: 600,
         alt: "One",
-      }
+      },
     ],
   },
-  authors: [{ name: "Deepanshu Mishra", url: "https://deepanshumishra.xyz" }, { name: "One", url: "https://one.deepanshumishra.xyz" }],
+  authors: [
+    { name: "Deepanshu Mishra", url: "https://deepanshumishra.xyz" },
+    { name: "One", url: "https://one.deepanshumishra.xyz" },
+  ],
   keywords: [
     "One",
     "Talk to calendar",
@@ -42,7 +45,7 @@ export const metadata: Metadata = {
     "zero.email",
     "zero",
     "0.email",
-    "google calendar"
+    "google calendar",
   ],
 
   twitter: {
@@ -72,9 +75,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${ws.className} antialiased`}
-      >
+      <body className={`${ws.className} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -82,12 +83,9 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <QueryProvideR>
-            <ToastProvider>
-              {children}
-            </ToastProvider>
+            <ToastProvider>{children}</ToastProvider>
           </QueryProvideR>
         </ThemeProvider>
-
       </body>
     </html>
   );
