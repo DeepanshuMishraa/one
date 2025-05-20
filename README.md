@@ -1,4 +1,4 @@
-# One 
+# One
 
 # One - Talk to Your Calendar
 
@@ -7,7 +7,7 @@ One is a modern calendar application that lets you interact with your schedule t
 ## Features
 
 - 🗣️ Natural language interactions with your calendar
-- ✨ Add events and meetings with simple messages 
+- ✨ Add events and meetings with simple messages
 - 🔄 Easily reschedule and move meetings
 - 📝 Get quick summaries of your schedule
 - 🌗 Dark/Light theme support
@@ -18,8 +18,11 @@ One is a modern calendar application that lets you interact with your schedule t
 - Next.js
 - TypeScript
 - Tailwind CSS
-- Framer Motion
-- next-themes
+- Motion
+- Shadcn UI
+- TRPC
+- PostgreSQL
+- Drizzle
 
 ## Getting Started
 
@@ -35,7 +38,17 @@ This project is currently in early access. Join the waitlist at [one](https://on
 pnpm install
 ```
 
-3. Run the development server
+3. Create a `.env` file and add the following variables:
+
+```bash
+DATABASE_URL="postgresql://postgres:postgres@localhost:5432/postgres"
+BETTERAUTH_SECRET=
+BETTERAUTH_URL="http://localhost:3000"
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+```
+
+4. Run the development server
 
 ```bash
 pnpm dev
@@ -46,8 +59,3 @@ pnpm dev
 ```bash
 pnpm build
 ```
-
-
-
-
-
