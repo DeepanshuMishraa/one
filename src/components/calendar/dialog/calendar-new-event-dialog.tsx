@@ -23,16 +23,16 @@ import { Button } from "@/components/ui/button";
 import { useCalendarContext } from "../calendar-context";
 import { format } from "date-fns";
 import { DateTimePicker } from "@/components/form/date-time-picker";
-import { createCalendarEvents } from "../../../../actions/actions";
 import { useToastManager } from "@/components/ui/toast";
 import { Loader2 } from "lucide-react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { trpc } from "@/trpc/client";
 
 const formSchema = z
   .object({
     title: z.string().min(1, "Title is required"),
     start: z.string(),
     end: z.string(),
+    description: z.string().optional(),
   })
   .refine(
     (data) => {
@@ -51,7 +51,7 @@ export default function CalendarNewEventDialog() {
     useCalendarContext();
 
   const toast = useToastManager();
-  const queryClient = useQueryClient();
+  const utils = trpc.useContext();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -62,45 +62,38 @@ export default function CalendarNewEventDialog() {
     },
   });
 
-  const { mutate, isPending } = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      try {
-        const newEvent = await createCalendarEvents({
-          title: values.title,
-          start: new Date(values.start),
-          end: new Date(values.end),
-          id: crypto.randomUUID(),
-        });
-
-        if (newEvent.status === 200 && newEvent.event) {
+  const { mutate: createEvent, isPending } =
+    trpc.createCalendarEvent.useMutation({
+      onSuccess: (response) => {
+        if (response.status === 200 && response.event) {
           toast.add({
-            title: `Event created successfully`,
-            description: `Event created successfully`,
+            title: "Event created successfully",
+            description: "Event created successfully",
           });
 
           const transformedEvent: CalendarEvent = {
-            id: newEvent.event.id as string,
-            title: newEvent.event.summary || values.title,
-            description: newEvent.event.description || undefined,
-            start: new Date(newEvent.event.start?.dateTime || values.start),
-            end: new Date(newEvent.event.end?.dateTime || values.end),
+            id: response.event.id!,
+            title: response.event.summary || form.getValues().title,
+            description: response.event.description || undefined,
+            start: new Date(response.event.start?.dateTime!),
+            end: new Date(response.event.end?.dateTime!),
           };
 
           setEvents([...events, transformedEvent]);
           setNewEventDialogOpen(false);
           form.reset();
         }
-      } catch (error) {
+      },
+      onError: (error) => {
         toast.add({
-          title: `Error creating event ${error}`,
-          description: `Error creating event`,
+          title: "Error creating event",
+          description: error.message || "Something went wrong",
         });
-      }
-    },
-    mutationKey: ["create-event"],
-    onSettled: () =>
-      queryClient.invalidateQueries({ queryKey: ["calendar-events"] }),
-  });
+      },
+      onSettled: () => {
+        utils.getCalendarEvents.invalidate();
+      },
+    });
 
   return (
     <Dialog open={newEventDialogOpen} onOpenChange={setNewEventDialogOpen}>
@@ -110,7 +103,14 @@ export default function CalendarNewEventDialog() {
         </DialogHeader>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit((values) => mutate(values))}
+            onSubmit={form.handleSubmit((values) => {
+              createEvent({
+                summary: values.title,
+                description: values.description || "",
+                start: values.start,
+                end: values.end,
+              });
+            })}
             className="space-y-4"
           >
             <FormField
