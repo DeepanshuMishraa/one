@@ -4,45 +4,42 @@ import { Mockup } from "./ui/mockup";
 import { StarsBackground } from "./ui/stars";
 import { Input } from "./ui/input";
 import { Counter } from "./Counter";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 import { useToastManager } from "./ui/toast";
 import { ArrowRight } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 export default function Hero() {
   const [email, setEmail] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
   const toast = useToastManager();
-  const [count, setCount] = useState(0);
+  const queryClient = useQueryClient();
 
-  useEffect(() => {
-    const fetchCount = async () => {
-      try {
-        const res = await axios.get("/api/waitlist");
-        setCount(res.data.count);
-      } catch (error) {
-        return error;
-      }
-    };
-    fetchCount();
-  }, []);
+  const { data: waitlistData } = useQuery({
+    queryKey: ["waitlist"],
+    queryFn: async () => {
+      const res = await axios.get("/api/waitlist");
+      return res.data;
+    },
+  });
 
-  const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
-    if (e) e.preventDefault();
-    if (!email) return;
-
-    try {
-      setIsLoading(true);
+  const { mutate: addToWaitlist, isPending: isLoading } = useMutation({
+    mutationFn: async (email: string) => {
       const res = await axios.post("/api/waitlist", { email });
-      if (res.data.success) {
-        toast.add({
-          title: "Email added to waitlist",
-          description: "You will be notified when we launch",
-        });
-        setEmail("");
-        setCount(res.data.count);
-      }
-    } catch (error: any) {
+      return res.data;
+    },
+    onSuccess: (data) => {
+      toast.add({
+        title: "Email added to waitlist",
+        description: "You will be notified when we launch",
+      });
+      setEmail("");
+      queryClient.setQueryData(["waitlist"], data);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["waitlist"] });
+    },
+    onError: (error: any) => {
       if (error.response?.status === 400) {
         toast.add({
           title: "Email already on waitlist",
@@ -56,9 +53,13 @@ export default function Hero() {
           description: "Something went wrong. Please try again.",
         });
       }
-    } finally {
-      setIsLoading(false);
-    }
+    },
+  });
+
+  const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
+    if (e) e.preventDefault();
+    if (!email) return;
+    addToWaitlist(email);
   };
 
   return (
@@ -100,8 +101,8 @@ export default function Hero() {
 
           <div className="mt-2 flex flex-col items-center gap-1 sm:mt-4 sm:flex-row sm:gap-2">
             <Counter
-              start={count}
-              end={count}
+              start={waitlistData?.count ?? 0}
+              end={waitlistData?.count ?? 0}
               duration={2}
               fontSize={14}
               className="rounded-none bg-orange-500 font-bold text-white sm:text-base md:text-lg"
@@ -155,8 +156,8 @@ export default function Hero() {
 
           <div className="flex items-center gap-2">
             <Counter
-              start={count}
-              end={count}
+              start={waitlistData?.count ?? 0}
+              end={waitlistData?.count ?? 0}
               duration={2}
               fontSize={16}
               className="rounded-none bg-orange-500 font-bold text-white"
