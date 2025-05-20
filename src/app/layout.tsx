@@ -4,6 +4,7 @@ import { ThemeProvider } from "@/providers/theme-provider";
 import { Raleway } from "next/font/google";
 import { ToastProvider } from "@/components/ui/toast";
 import QueryProvideR from "../providers/providers";
+import { Analytics } from "@vercel/analytics/next";
 
 const raleway = Raleway({
   subsets: ["latin"],
@@ -85,6 +86,7 @@ export default function RootLayout({
             <ToastProvider>{children}</ToastProvider>
           </QueryProvideR>
         </ThemeProvider>
+        <Analytics />
       </body>
     </html>
   );
