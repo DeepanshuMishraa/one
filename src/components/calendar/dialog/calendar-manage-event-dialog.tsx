@@ -35,11 +35,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  updateCalendarEvent,
-  deleteCalendarEvent,
-} from "../../../../actions/actions";
+import { trpc } from "@/trpc/client";
 import { useToastManager } from "@/components/ui/toast";
 import { Loader2 } from "lucide-react";
 import { CalendarEvent } from "../calendar-types";
@@ -81,7 +77,7 @@ export default function CalendarManageEventDialog() {
   } = useCalendarContext();
 
   const toast = useToastManager();
-  const queryClient = useQueryClient();
+  const utils = trpc.useContext();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -102,34 +98,16 @@ export default function CalendarManageEventDialog() {
     }
   }, [selectedEvent, form]);
 
-  const updateMutation = useMutation({
-    mutationFn: async (values: z.infer<typeof formSchema>) => {
-      if (!selectedEvent) return;
-
-      const updatedEvent = {
-        ...selectedEvent,
-        title: values.title,
-        start: new Date(values.start),
-        end: new Date(values.end),
-      };
-
-      const response = await updateCalendarEvent(updatedEvent);
-
-      if (response.error) {
-        throw new Error(response.message as string);
-      }
-
-      return response.event;
-    },
-    onSuccess: (data) => {
-      if (!selectedEvent || !data) return;
+  const updateMutation = trpc.updateCalendarEvent.useMutation({
+    onSuccess: (response) => {
+      if (!selectedEvent || !response.event) return;
 
       const updatedEvent: CalendarEvent = {
-        id: data.id || selectedEvent.id,
-        title: data.summary || selectedEvent.title,
-        description: data.description || undefined,
-        start: new Date(data.start?.dateTime || selectedEvent.start),
-        end: new Date(data.end?.dateTime || selectedEvent.end),
+        id: response.event.id!,
+        title: response.event.summary || selectedEvent.title,
+        description: response.event.description || undefined,
+        start: new Date(response.event.start?.dateTime!),
+        end: new Date(response.event.end?.dateTime!),
       };
 
       setEvents(
@@ -152,26 +130,11 @@ export default function CalendarManageEventDialog() {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      utils.getCalendarEvents.invalidate();
     },
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedEvent) {
-        throw new Error("No event selected");
-      }
-
-      const response = await deleteCalendarEvent(selectedEvent.id);
-
-      if (response.error) {
-        throw new Error(
-          (response.message as string) || "Failed to delete event",
-        );
-      }
-
-      return response;
-    },
+  const deleteMutation = trpc.deleteCalendarEvent.useMutation({
     onSuccess: () => {
       if (!selectedEvent) return;
       setEvents(events.filter((event) => event.id !== selectedEvent.id));
@@ -189,7 +152,7 @@ export default function CalendarManageEventDialog() {
       });
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+      utils.getCalendarEvents.invalidate();
     },
   });
 
@@ -209,9 +172,16 @@ export default function CalendarManageEventDialog() {
         </DialogHeader>
         <Form {...form}>
           <form
-            onSubmit={form.handleSubmit((values) =>
-              updateMutation.mutate(values),
-            )}
+            onSubmit={form.handleSubmit((values) => {
+              if (!selectedEvent) return;
+              updateMutation.mutate({
+                id: selectedEvent.id,
+                summary: values.title,
+                description: selectedEvent.description || "",
+                start: values.start,
+                end: values.end,
+              });
+            })}
             className="space-y-4"
           >
             <FormField
@@ -281,7 +251,10 @@ export default function CalendarManageEventDialog() {
                   <AlertDialogFooter>
                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                     <AlertDialogAction
-                      onClick={() => deleteMutation.mutate()}
+                      onClick={() => {
+                        if (!selectedEvent) return;
+                        deleteMutation.mutate({ id: selectedEvent.id });
+                      }}
                       disabled={isLoading}
                     >
                       {isLoading && deleteMutation.isPending ? (
