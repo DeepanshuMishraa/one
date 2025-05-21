@@ -1,73 +1,20 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import { Geist, Geist_Mono } from "next/font/google";
 import { ThemeProvider } from "@/providers/theme-provider";
-import { Raleway } from "next/font/google";
+import { CalendarProvider } from "@/components/event-calendar/calendar-context";
+import "./globals.css";
 import { ToastProvider } from "@/components/ui/toast";
-import QueryProvideR from "../providers/providers";
-import { Analytics } from "@vercel/analytics/next";
 import { TRPCProvider } from "@/trpc/client";
+import QueryProvideR from "@/providers/providers";
 
-const raleway = Raleway({
+const fontSans = Geist({
+  variable: "--font-sans",
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "One",
-  description: "Chat with your calendar | One",
-  openGraph: {
-    title: "One",
-    description: "Chat with your calendar | One",
-    url: "https://one.deepanshumishra.xyz",
-    siteName: "One",
-    locale: "en_US",
-    type: "website",
-    images: [
-      {
-        url: "https://one.deepanshumishra.xyz/og.png",
-        width: 800,
-        height: 600,
-        alt: "One",
-      },
-    ],
-  },
-  authors: [
-    { name: "Deepanshu Mishra", url: "https://deepanshumishra.xyz" },
-    { name: "One", url: "https://one.deepanshumishra.xyz" },
-  ],
-  keywords: [
-    "One",
-    "Talk to calendar",
-    "One AI Calendar",
-    "AI calendar",
-    "chat with calendar",
-    "ycombinator",
-    "deepanshu mishra",
-    "nextjs",
-    "zero.email",
-    "zero",
-    "0.email",
-    "google calendar",
-  ],
-
-  twitter: {
-    card: "summary_large_image",
-    title: "One",
-    description: "Chat with your calendar | One",
-    images: ["https://one.deepanshumishra.xyz/og.png"],
-    creator: "@deepanshuDipxsy",
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-    },
-  },
-  icons: {
-    icon: "/favicon.ico",
-  },
-};
+const fontMono = Geist_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+});
 
 export default function RootLayout({
   children,
@@ -76,7 +23,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={`${raleway.className} antialiased`}>
+      <body
+        className={`${fontSans.variable} ${fontMono.variable} bg-sidebar font-sans antialiased`}
+      >
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -84,12 +33,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <TRPCProvider>
-            <QueryProvideR>
-              <ToastProvider>{children}</ToastProvider>
-            </QueryProvideR>
+            <ToastProvider>
+              <QueryProvideR>
+                <CalendarProvider>{children}</CalendarProvider>
+              </QueryProvideR>
+            </ToastProvider>
           </TRPCProvider>
         </ThemeProvider>
-        <Analytics />
       </body>
     </html>
   );

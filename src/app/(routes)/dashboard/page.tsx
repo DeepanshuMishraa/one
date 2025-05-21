@@ -1,9 +1,22 @@
-import CalendarComponent from "@/components/calendar";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Experiment 06 - Crafted.is",
+};
+
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import BigCalendar from "@/components/big-calendar";
 
 export default function Dashboard() {
   return (
-    <div className="rounded-2xl m-6 h-[100svh] bg-gray-900/15">
-      <CalendarComponent />
-    </div>
-  )
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <div className="flex flex-1 flex-col gap-4 p-2 pt-0">
+          <BigCalendar />
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
+  );
 }
