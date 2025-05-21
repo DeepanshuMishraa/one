@@ -1,4 +1,4 @@
-import { pgTable, text, timestamp, boolean, integer } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, integer, jsonb } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
   id: text('id').primaryKey(),
@@ -54,7 +54,6 @@ export const waitlist = pgTable("waitlist", {
   count: integer("count").default(0).notNull(),
 })
 
-
 export const calendar_events = pgTable("calendar_events", {
   id: text("id").primaryKey(),
   summary: text("summary").notNull(),
@@ -62,7 +61,7 @@ export const calendar_events = pgTable("calendar_events", {
   startTime: timestamp("start_time").notNull(),
   endTime: timestamp("end_time").notNull(),
   location: text("location"),
-  attendees: text("attendees").default('[]').notNull(),
+  attendees: jsonb("attendees").default('[]').notNull(),
   status: text("status").notNull(),
   event_created_at: timestamp("event_created_at").notNull(),
   event_updated_at: timestamp("event_updated_at").notNull(),
@@ -71,6 +70,18 @@ export const calendar_events = pgTable("calendar_events", {
   updatedAt: timestamp("updated_at").notNull(),
 })
 
+export const event_participants = pgTable("event_participants", {
+  id: text("id").primaryKey(),
+  eventId: text("event_id").notNull().references(() => calendar_events.id, { onDelete: 'cascade' }),
+  email: text("email").notNull(),
+  displayName: text("display_name"),
+  photoUrl: text("photo_url"),
+  responseStatus: text("response_status").notNull(),
+  optional: boolean("optional").default(false),
+  organizer: boolean("organizer").default(false),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+})
 
 export const calendarMetadata = pgTable("calendar_metadata", {
   id: text("id").primaryKey(),

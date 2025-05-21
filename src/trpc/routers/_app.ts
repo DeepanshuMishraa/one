@@ -4,19 +4,23 @@ import {
   account,
   calendar_events,
   calendarMetadata,
+  event_participants,
   waitlist,
 } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { google } from "googleapis";
-import { CalendarEventResponse } from "@/components/calendar/calendar-types";
+import { CalendarEvent, EventColor } from "@/components/event-calendar/types";
 import {
   addWaitlistSchema,
+  attendeeSchema,
   createCalendarEventSchema,
   deleteCalendarEventSchema,
+  participantSchema,
   updateCalendarEventSchema,
 } from "@/lib/types";
+import { z } from "zod";
 
 const GetUserSession = async () => {
   const session = await auth.api.getSession({
@@ -28,6 +32,25 @@ const GetUserSession = async () => {
   }
 
   return session.user;
+};
+
+type Attendee = z.infer<typeof attendeeSchema>;
+
+type Participant = z.infer<typeof participantSchema>;
+
+// Map Google Calendar colors to our EventColor type
+const colorMap: { [key: string]: EventColor } = {
+  "1": "blue",    // Lavender
+  "2": "emerald", // Sage
+  "3": "violet",  // Grape
+  "4": "rose",    // Flamingo
+  "5": "orange",  // Banana
+  "6": "blue",    // Tangerine
+  "7": "violet",  // Peacock
+  "8": "emerald", // Graphite
+  "9": "orange",  // Blueberry
+  "10": "rose",   // Basil
+  "11": "blue",   // Tomato
 };
 
 export const appRouter = createTRPCRouter({
@@ -79,13 +102,6 @@ export const appRouter = createTRPCRouter({
       const session = await GetUserSession();
       const userId = session.id;
 
-      const latestEvent = await db
-        .select()
-        .from(calendar_events)
-        .where(eq(calendar_events.userId, userId))
-        .orderBy(desc(calendar_events.event_updated_at))
-        .limit(1);
-
       const googleAccount = await db
         .select()
         .from(account)
@@ -116,78 +132,121 @@ export const appRouter = createTRPCRouter({
 
       const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-      const updatedMin =
-        latestEvent.length > 0
-          ? new Date(latestEvent[0].event_updated_at).toISOString()
-          : undefined;
-
-      let events: any[] = [];
-      let pageToken: string | undefined;
-      do {
-        const response = await calendar.events.list({
-          singleEvents: true,
-          orderBy: "startTime",
-          pageToken,
-          maxResults: 100,
-          calendarId: "primary",
-          updatedMin,
-        });
-
-        if (response.data.items) {
-          events = events.concat(response.data.items);
-        }
-
-        pageToken = response.data.nextPageToken || undefined;
-      } while (pageToken);
 
       const calendarInfo = await calendar.calendars.get({
-        calendarId: "primary",
+        calendarId: 'primary',
       });
 
-      await db
-        .insert(calendarMetadata)
-        .values({
-          id: calendarInfo.data.id!,
-          summary: calendarInfo.data.summary!,
-          description: calendarInfo.data.description || "",
-          timeZone: calendarInfo.data.timeZone!,
-          calendarId: userId,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        })
-        .onConflictDoUpdate({
-          target: calendarMetadata.id,
-          set: {
-            summary: calendarInfo.data.summary!,
-            description: calendarInfo.data.description || "",
-            timeZone: calendarInfo.data.timeZone!,
-            updatedAt: new Date(),
-          },
-        });
+      const userTimeZone = calendarInfo.data.timeZone;
 
-      // Update events table
-      for (const event of events) {
-        const startTime = new Date(event.start?.dateTime || event.start?.date);
-        const endTime = new Date(event.end?.dateTime || event.end?.date);
-
-        // Skip invalid dates
-        if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
-          continue;
+      const getHolidayCalendarId = (timeZone: string): string => {
+        if (timeZone.startsWith('Asia/')) {
+          if (timeZone === 'Asia/Kolkata') {
+            return 'en.indian#holiday@group.v.calendar.google.com';
+          }
+          if (timeZone.includes('Shanghai') || timeZone.includes('Beijing') || timeZone.includes('Hong_Kong')) {
+            return 'zh.china#holiday@group.v.calendar.google.com';
+          }
+          if (timeZone === 'Asia/Tokyo') {
+            return 'ja.japanese#holiday@group.v.calendar.google.com';
+          }
+          if (timeZone === 'Asia/Singapore') {
+            return 'en.singapore#holiday@group.v.calendar.google.com';
+          }
         }
 
+        if (timeZone.startsWith('Europe/')) {
+          if (timeZone === 'Europe/London') {
+            return 'en.uk#holiday@group.v.calendar.google.com';
+          }
+          return 'en.european#holiday@group.v.calendar.google.com';
+        }
+
+        if (timeZone.startsWith('Australia/') || timeZone.startsWith('Pacific/Auckland')) {
+          return 'en.australian#holiday@group.v.calendar.google.com';
+        }
+        return 'en.usa#holiday@group.v.calendar.google.com';
+      };
+
+      const holidayCalendarId = getHolidayCalendarId(userTimeZone as string);
+
+      const colors = await calendar.colors.get();
+      const eventColors = colors.data.event || {};
+
+      const response = await calendar.events.list({
+        calendarId: 'primary',
+        timeMin: new Date(new Date().getFullYear() - 1, 0, 1).toISOString(), 
+        timeMax: new Date(new Date().getFullYear() + 1, 11, 31).toISOString(), 
+        singleEvents: true,
+        orderBy: 'startTime',
+        maxResults: 2500,
+      });
+
+     
+      const holidayResponse = await calendar.events.list({
+        calendarId: holidayCalendarId,
+        timeMin: new Date(new Date().getFullYear() - 1, 0, 1).toISOString(),
+        timeMax: new Date(new Date().getFullYear() + 1, 11, 31).toISOString(),
+        singleEvents: true,
+        orderBy: 'startTime',
+      });
+
+      const events = response.data.items || [];
+      const holidayEvents = holidayResponse.data.items || [];
+      const allEvents = [...events, ...holidayEvents];
+
+      const transformedEvents = allEvents.map(event => {
+        const startDateTime = event.start?.dateTime || event.start?.date;
+        const endDateTime = event.end?.dateTime || event.end?.date;
+
+        if (!startDateTime || !endDateTime) return null;
+
+        const attendees = event.attendees?.map(attendee => ({
+          email: attendee.email || '',
+          displayName: attendee.displayName || undefined,
+          photoUrl: undefined, 
+          responseStatus: attendee.responseStatus || 'needsAction',
+          optional: attendee.optional || false,
+          organizer: attendee.organizer || false
+        })) || [];
+
+        
+        const isHoliday = holidayEvents.includes(event);
+        const color = event.colorId
+          ? colorMap[event.colorId] || "blue"
+          : isHoliday
+            ? "rose" 
+            : "blue";
+
+        const calendarEvent: CalendarEvent = {
+          id: event.id || '',
+          title: event.summary || 'Untitled Event',
+          description: event.description || undefined,
+          start: new Date(startDateTime),
+          end: new Date(endDateTime),
+          allDay: !event.start?.dateTime, 
+          location: event.location || undefined,
+          attendees,
+          color
+        };
+
+        return calendarEvent;
+      }).filter((event): event is CalendarEvent => event !== null);
+
+      for (const event of transformedEvents) {
         await db
           .insert(calendar_events)
           .values({
             id: event.id,
-            summary: event.summary || "",
+            summary: event.title,
             description: event.description || "",
-            startTime,
-            endTime,
+            startTime: event.start,
+            endTime: event.end,
             location: event.location || "",
-            attendees: JSON.stringify(event.attendees || []),
-            status: event.status || "confirmed",
-            event_created_at: new Date(event.created),
-            event_updated_at: new Date(event.updated),
+            attendees: event.attendees || [],
+            status: "confirmed",
+            event_created_at: new Date(),
+            event_updated_at: new Date(),
             userId: userId,
             createdAt: new Date(),
             updatedAt: new Date(),
@@ -195,85 +254,27 @@ export const appRouter = createTRPCRouter({
           .onConflictDoUpdate({
             target: calendar_events.id,
             set: {
-              summary: event.summary || "",
+              summary: event.title,
               description: event.description || "",
-              startTime,
-              endTime,
+              startTime: event.start,
+              endTime: event.end,
               location: event.location || "",
-              attendees: JSON.stringify(event.attendees || []),
-              status: event.status || "confirmed",
-              event_updated_at: new Date(event.updated),
+              attendees: event.attendees || [],
               updatedAt: new Date(),
             },
           });
       }
 
-      const dbEvents = await db
-        .select()
-        .from(calendar_events)
-        .where(eq(calendar_events.userId, userId))
-        .orderBy(desc(calendar_events.startTime));
-
-      const dbCalendar = await db
-        .select()
-        .from(calendarMetadata)
-        .where(eq(calendarMetadata.calendarId, userId))
-        .limit(1);
-
-      const transformedEvents = dbEvents
-        .map((event) => {
-          try {
-            const start = new Date(event.startTime);
-            const end = new Date(event.endTime);
-
-            // Skip events with invalid dates
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-              return null;
-            }
-
-            const calendarEvent: CalendarEventResponse = {
-              id: event.id,
-              summary: event.summary,
-              start: start.toISOString(),
-              end: end.toISOString(),
-            };
-
-            // Add optional fields
-            if (event.description)
-              calendarEvent.description = event.description;
-            if (event.location) calendarEvent.location = event.location;
-            if (event.attendees)
-              calendarEvent.attendees = JSON.parse(event.attendees);
-            if (event.status) calendarEvent.status = event.status;
-            if (event.event_created_at)
-              calendarEvent.created = event.event_created_at.toISOString();
-            if (event.event_updated_at)
-              calendarEvent.updated = event.event_updated_at.toISOString();
-
-            return calendarEvent;
-          } catch (error) {
-            return null;
-          }
-        })
-        .filter((event): event is CalendarEventResponse => event !== null);
-
       return {
         events: transformedEvents,
-        calendar: dbCalendar[0]
-          ? {
-              id: dbCalendar[0].id,
-              summary: dbCalendar[0].summary,
-              description: dbCalendar[0].description,
-              timeZone: dbCalendar[0].timeZone,
-            }
-          : null,
-        status: 200,
-      } as const;
+        status: 200
+      };
     } catch (error) {
+      console.error('Calendar fetch error:', error);
       throw new Error(
         error instanceof Error
           ? error.message
-          : "Failed to fetch calendar events",
+          : "Failed to fetch calendar events"
       );
     }
   }),
