@@ -1,10 +1,8 @@
 import { isSameDay } from "date-fns";
 
-import type { CalendarEvent, EventColor } from "@/components/event-calendar/event-calendar";
+import type { CalendarEvent, EventColor } from "@/components/event-calendar";
 
-/**
- * Get CSS classes for event colors
- */
+
 export function getEventColorClasses(color?: EventColor | string): string {
   const eventColor = color || "sky";
 
@@ -102,9 +100,7 @@ export function getSpanningEventsForDay(
   });
 }
 
-/**
- * Get all events visible on a specific day (starting, ending, or spanning)
- */
+
 export function getAllEventsForDay(
   events: CalendarEvent[],
   day: Date,

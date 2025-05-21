@@ -69,7 +69,7 @@ export default function Component() {
 
       return {
         id: event.id,
-        title: event.summary,
+        title: event.title,
         description: event.description || "",
         start: new Date(event.start),
         end: new Date(event.end),

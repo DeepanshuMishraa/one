@@ -22,3 +22,26 @@ export const updateCalendarEventSchema = z.object({
 export const deleteCalendarEventSchema = z.object({
   id: z.string().min(1, "Event ID is required"),
 });
+
+export const participantSchema = z.object({
+  id: z.string(),
+  eventId: z.string(),
+  email: z.string(),
+  displayName: z.string().nullable(),
+  photoUrl: z.string().nullable(),
+  responseStatus: z.string(),
+  optional: z.boolean(),
+  organizer: z.boolean(),
+  createdAt: z.date(),
+  updatedAt: z.date()
+});
+
+
+export const attendeeSchema = z.object({
+  email: z.string(),
+  displayName: z.string().nullable(),
+  photoUrl: z.string().nullable(),
+  responseStatus: z.string(),
+  optional: z.boolean(),
+  organizer: z.boolean()
+});

@@ -264,6 +264,13 @@ export function EventCalendar({
     }
   }, [currentDate, view]);
 
+  // Get attendees for the selected event
+  const eventAttendees = useMemo(() => {
+    if (!selectedEvent?.id) return [];
+    const event = events.find(e => e.id === selectedEvent.id);
+    return event?.attendees || [];
+  }, [selectedEvent, events]);
+
   return (
     <div
       className="flex has-data-[slot=month-view]:flex-1 flex-col rounded-lg"
@@ -293,7 +300,7 @@ export function EventCalendar({
                 {viewTitle}
               </h2>
             </div>
-            <Participants />
+            <Participants participants={eventAttendees} />
           </div>
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center justify-between gap-2">

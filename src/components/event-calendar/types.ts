@@ -1,5 +1,14 @@
 export type CalendarView = "month" | "week" | "day" | "agenda";
 
+export interface Attendee {
+  email: string;
+  displayName?: string;
+  photoUrl?: string;
+  responseStatus: string;
+  optional: boolean;
+  organizer: boolean;
+}
+
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -10,6 +19,7 @@ export interface CalendarEvent {
   color?: EventColor;
   label?: string;
   location?: string;
+  attendees?: Attendee[];
 }
 
 export interface CalendarEventResponse {
@@ -19,11 +29,10 @@ export interface CalendarEventResponse {
   start: string;
   end: string;
   location?: string;
-  attendees?: any[];
+  attendees?: Attendee[];
   status?: string;
   created?: string;
   updated?: string;
 }
-
 
 export type EventColor = "blue" | "orange" | "violet" | "rose" | "emerald";
