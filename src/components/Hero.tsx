@@ -7,48 +7,59 @@ import { Counter } from "./Counter";
 import { useState } from "react";
 import { useToastManager } from "./ui/toast";
 import { ArrowRight } from "lucide-react";
-import { trpc } from "@/trpc/client";
-import Link from "next/link";
-
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 
 export default function Hero() {
   const [email, setEmail] = useState("");
   const toast = useToastManager();
-  const utils = trpc.useContext();
+  const queryClient = useQueryClient();
 
-  const { data: waitlistData } = trpc.waitlist.useQuery();
+  const { data: waitlistData } = useQuery({
+    queryKey: ["waitlist"],
+    queryFn: async () => {
+      const res = await axios.get("/api/waitlist");
+      return res.data;
+    },
+  });
 
-  const { mutate: addToWaitlist, isPending: isLoading } =
-    trpc.addToWaitlist.useMutation({
-      onSuccess: () => {
+  const { mutate: addToWaitlist, isPending: isLoading } = useMutation({
+    mutationFn: async (email: string) => {
+      const res = await axios.post("/api/waitlist", { email });
+      return res.data;
+    },
+    onSuccess: (data) => {
+      toast.add({
+        title: "Email added to waitlist",
+        description: "You will be notified when we launch",
+      });
+      setEmail("");
+      queryClient.setQueryData(["waitlist"], data);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["waitlist"] });
+    },
+    onError: (error: any) => {
+      if (error.response?.status === 400) {
         toast.add({
-          title: "Email added to waitlist",
-          description: "You will be notified when we launch",
+          title: "Email already on waitlist",
+          type: "warning",
+          description:
+            "This email has already been registered for early access",
         });
-        setEmail("");
-        utils.waitlist.invalidate();
-      },
-      onError: (error: any) => {
-        if (error.message === "Email already on waitlist") {
-          toast.add({
-            title: "Email already on waitlist",
-            type: "warning",
-            description:
-              "This email has already been registered for early access",
-          });
-        } else {
-          toast.add({
-            title: "Error adding email",
-            description: "Something went wrong. Please try again.",
-          });
-        }
-      },
-    });
+      } else {
+        toast.add({
+          title: "Error adding email",
+          description: "Something went wrong. Please try again.",
+        });
+      }
+    },
+  });
 
   const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
     if (e) e.preventDefault();
     if (!email) return;
-    addToWaitlist({ email });
+    addToWaitlist(email);
   };
 
   return (
