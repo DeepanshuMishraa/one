@@ -132,24 +132,70 @@ export const appRouter = createTRPCRouter({
 
       const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
-      // Get color definitions from Google Calendar
+
+      const calendarInfo = await calendar.calendars.get({
+        calendarId: 'primary',
+      });
+
+      const userTimeZone = calendarInfo.data.timeZone;
+
+      const getHolidayCalendarId = (timeZone: string): string => {
+        if (timeZone.startsWith('Asia/')) {
+          if (timeZone === 'Asia/Kolkata') {
+            return 'en.indian#holiday@group.v.calendar.google.com';
+          }
+          if (timeZone.includes('Shanghai') || timeZone.includes('Beijing') || timeZone.includes('Hong_Kong')) {
+            return 'zh.china#holiday@group.v.calendar.google.com';
+          }
+          if (timeZone === 'Asia/Tokyo') {
+            return 'ja.japanese#holiday@group.v.calendar.google.com';
+          }
+          if (timeZone === 'Asia/Singapore') {
+            return 'en.singapore#holiday@group.v.calendar.google.com';
+          }
+        }
+
+        if (timeZone.startsWith('Europe/')) {
+          if (timeZone === 'Europe/London') {
+            return 'en.uk#holiday@group.v.calendar.google.com';
+          }
+          return 'en.european#holiday@group.v.calendar.google.com';
+        }
+
+        if (timeZone.startsWith('Australia/') || timeZone.startsWith('Pacific/Auckland')) {
+          return 'en.australian#holiday@group.v.calendar.google.com';
+        }
+        return 'en.usa#holiday@group.v.calendar.google.com';
+      };
+
+      const holidayCalendarId = getHolidayCalendarId(userTimeZone as string);
+
       const colors = await calendar.colors.get();
       const eventColors = colors.data.event || {};
 
-      // Fetch events from Google Calendar
       const response = await calendar.events.list({
         calendarId: 'primary',
-        timeMin: new Date(new Date().setMonth(new Date().getMonth() - 1)).toISOString(), // Last month
-        timeMax: new Date(new Date().setMonth(new Date().getMonth() + 2)).toISOString(), // Next 2 months
+        timeMin: new Date(new Date().getFullYear() - 1, 0, 1).toISOString(), 
+        timeMax: new Date(new Date().getFullYear() + 1, 11, 31).toISOString(), 
         singleEvents: true,
         orderBy: 'startTime',
-        maxResults: 2500, // Get more events
+        maxResults: 2500,
+      });
+
+     
+      const holidayResponse = await calendar.events.list({
+        calendarId: holidayCalendarId,
+        timeMin: new Date(new Date().getFullYear() - 1, 0, 1).toISOString(),
+        timeMax: new Date(new Date().getFullYear() + 1, 11, 31).toISOString(),
+        singleEvents: true,
+        orderBy: 'startTime',
       });
 
       const events = response.data.items || [];
+      const holidayEvents = holidayResponse.data.items || [];
+      const allEvents = [...events, ...holidayEvents];
 
-      // Transform events to match our CalendarEvent type
-      const transformedEvents = events.map(event => {
+      const transformedEvents = allEvents.map(event => {
         const startDateTime = event.start?.dateTime || event.start?.date;
         const endDateTime = event.end?.dateTime || event.end?.date;
 
@@ -158,14 +204,19 @@ export const appRouter = createTRPCRouter({
         const attendees = event.attendees?.map(attendee => ({
           email: attendee.email || '',
           displayName: attendee.displayName || undefined,
-          photoUrl: undefined, // We'll handle this separately if needed
+          photoUrl: undefined, 
           responseStatus: attendee.responseStatus || 'needsAction',
           optional: attendee.optional || false,
           organizer: attendee.organizer || false
         })) || [];
 
-        // Get the color from the event or default to blue
-        const color = event.colorId ? colorMap[event.colorId] || "blue" : "blue";
+        
+        const isHoliday = holidayEvents.includes(event);
+        const color = event.colorId
+          ? colorMap[event.colorId] || "blue"
+          : isHoliday
+            ? "rose" 
+            : "blue";
 
         const calendarEvent: CalendarEvent = {
           id: event.id || '',
@@ -173,7 +224,7 @@ export const appRouter = createTRPCRouter({
           description: event.description || undefined,
           start: new Date(startDateTime),
           end: new Date(endDateTime),
-          allDay: !event.start?.dateTime, // If no dateTime, it's an all-day event
+          allDay: !event.start?.dateTime, 
           location: event.location || undefined,
           attendees,
           color
@@ -182,7 +233,6 @@ export const appRouter = createTRPCRouter({
         return calendarEvent;
       }).filter((event): event is CalendarEvent => event !== null);
 
-      // Store events in the database for future reference
       for (const event of transformedEvents) {
         await db
           .insert(calendar_events)

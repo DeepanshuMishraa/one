@@ -65,15 +65,13 @@ export default function Component() {
     if (!calendarData?.events) return [];
 
     return calendarData.events.map((event): CalendarEvent => {
-      const color = event.colorId ? colorMap[event.colorId] || "blue" : "blue";
-
       return {
         id: event.id,
         title: event.title,
         description: event.description || "",
         start: new Date(event.start),
         end: new Date(event.end),
-        color,
+        color: event.color || "blue",
         location: event.location || "",
       };
     });
