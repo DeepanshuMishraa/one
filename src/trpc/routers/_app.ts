@@ -10,7 +10,7 @@ import { eq, desc } from "drizzle-orm";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { google } from "googleapis";
-import { CalendarEventResponse } from "@/components/calendar/calendar-types";
+import { CalendarEventResponse } from "@/components/event-calendar/types";
 import {
   addWaitlistSchema,
   createCalendarEventSchema,
@@ -190,7 +190,6 @@ export const appRouter = createTRPCRouter({
             location: event.location || "",
             attendees: JSON.stringify(event.attendees || []),
             status: event.status || "confirmed",
-            colorId: event.colorId || null,
             event_created_at: new Date(event.created),
             event_updated_at: new Date(event.updated),
             userId: userId,
@@ -207,7 +206,6 @@ export const appRouter = createTRPCRouter({
               location: event.location || "",
               attendees: JSON.stringify(event.attendees || []),
               status: event.status || "confirmed",
-              colorId: event.colorId || null,
               event_updated_at: new Date(event.updated),
               updatedAt: new Date(),
             },
@@ -242,7 +240,6 @@ export const appRouter = createTRPCRouter({
               summary: event.summary,
               start: start.toISOString(),
               end: end.toISOString(),
-              colorId: event.colorId || undefined,
             };
 
             // Add optional fields

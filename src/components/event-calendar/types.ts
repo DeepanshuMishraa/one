@@ -12,4 +12,18 @@ export interface CalendarEvent {
   location?: string;
 }
 
+export interface CalendarEventResponse {
+  id: string;
+  summary: string;
+  description?: string;
+  start: string;
+  end: string;
+  location?: string;
+  attendees?: any[];
+  status?: string;
+  created?: string;
+  updated?: string;
+}
+
+
 export type EventColor = "blue" | "orange" | "violet" | "rose" | "emerald";
