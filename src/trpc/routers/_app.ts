@@ -116,6 +116,10 @@ export const appRouter = createTRPCRouter({
 
       const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
+      // Get color definitions from Google Calendar
+      const colors = await calendar.colors.get();
+      const eventColors = colors.data.event || {};
+
       const updatedMin =
         latestEvent.length > 0
           ? new Date(latestEvent[0].event_updated_at).toISOString()
@@ -186,6 +190,7 @@ export const appRouter = createTRPCRouter({
             location: event.location || "",
             attendees: JSON.stringify(event.attendees || []),
             status: event.status || "confirmed",
+            colorId: event.colorId || null,
             event_created_at: new Date(event.created),
             event_updated_at: new Date(event.updated),
             userId: userId,
@@ -202,6 +207,7 @@ export const appRouter = createTRPCRouter({
               location: event.location || "",
               attendees: JSON.stringify(event.attendees || []),
               status: event.status || "confirmed",
+              colorId: event.colorId || null,
               event_updated_at: new Date(event.updated),
               updatedAt: new Date(),
             },
@@ -236,6 +242,7 @@ export const appRouter = createTRPCRouter({
               summary: event.summary,
               start: start.toISOString(),
               end: end.toISOString(),
+              colorId: event.colorId || undefined,
             };
 
             // Add optional fields
@@ -261,12 +268,13 @@ export const appRouter = createTRPCRouter({
         events: transformedEvents,
         calendar: dbCalendar[0]
           ? {
-              id: dbCalendar[0].id,
-              summary: dbCalendar[0].summary,
-              description: dbCalendar[0].description,
-              timeZone: dbCalendar[0].timeZone,
-            }
+            id: dbCalendar[0].id,
+            summary: dbCalendar[0].summary,
+            description: dbCalendar[0].description,
+            timeZone: dbCalendar[0].timeZone,
+          }
           : null,
+        colors: eventColors,
         status: 200,
       } as const;
     } catch (error) {
