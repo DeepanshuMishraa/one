@@ -1,0 +1,23 @@
+{
+  "name": "@repo/trpc",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@tanstack/react-query": "^5.76.1",
+    "@trpc/client": "^11.1.2",
+    "@trpc/react-query": "^11.1.2",
+    "@trpc/server": "^11.1.2"
+  },
+  "exports": {
+    ".": "./init.ts",
+    "./client": "./client.tsx",
+    "./router": "./routers/_app.ts"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
