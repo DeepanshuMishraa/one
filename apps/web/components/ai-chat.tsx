@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { MultimodalInput } from "./ui/multimodal-input";
-import { useSession } from "@/lib/auth.client";
+import { useSession } from "@repo/auth/client";
 export default function AiChat() {
     const { data: session } = useSession();
     return (
