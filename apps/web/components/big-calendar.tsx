@@ -8,6 +8,7 @@ import {
   type CalendarEvent,
   type EventColor,
 } from "@/components/event-calendar";
+import { signIn } from "@repo/auth/client";
 
 export const etiquettes = [
   {
@@ -59,7 +60,9 @@ const colorMap: { [key: string]: EventColor } = {
 export default function Component() {
   const [activeEtiquettes, setActiveEtiquettes] = useState(etiquettes);
 
-  const { data: calendarData, isLoading } = trpc.getCalendarEvents.useQuery();
+  const { data: calendarData, isLoading, error } = trpc.calendar.getCalendarEvents.useQuery(undefined, {
+    retry: false, 
+  });
 
   const events = useMemo(() => {
     if (!calendarData?.events) return [];
@@ -85,19 +88,19 @@ export default function Component() {
   }, [events, activeEtiquettes]);
 
   const utils = trpc.useContext();
-  const createEventMutation = trpc.createCalendarEvent.useMutation({
+  const createEventMutation = trpc.calendar.createCalendarEvent.useMutation({
     onSuccess: () => {
-      utils.getCalendarEvents.invalidate();
+      utils.calendar.getCalendarEvents.invalidate();
     },
   });
-  const updateEventMutation = trpc.updateCalendarEvent.useMutation({
+  const updateEventMutation = trpc.calendar.updateCalendarEvent.useMutation({
     onSuccess: () => {
-      utils.getCalendarEvents.invalidate();
+      utils.calendar.getCalendarEvents.invalidate();
     },
   });
-  const deleteEventMutation = trpc.deleteCalendarEvent.useMutation({
+  const deleteEventMutation = trpc.calendar.deleteCalendarEvent.useMutation({
     onSuccess: () => {
-      utils.getCalendarEvents.invalidate();
+      utils.calendar.getCalendarEvents.invalidate();
     },
   });
 
@@ -138,8 +141,41 @@ export default function Component() {
     }
   };
 
-  return (
+  const handleReconnectGoogle = async () => {
+    await signIn.social({
+      provider: "google",
+      scopes: ["https://www.googleapis.com/auth/calendar", "https://www.googleapis.com/auth/calendar.events"],
+    });
+  };
 
+  if (error?.message?.includes("reconnect your Google account")) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full gap-4 p-4">
+        <div className="text-lg font-medium ">
+          Please connect your Google Calendar to continue
+        </div>
+        <p className="text-sm  max-w-md text-center">
+          We need access to your Google Calendar to show and manage your events. Click below to connect your account.
+        </p>
+        <button
+          onClick={handleReconnectGoogle}
+          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+        >
+          Connect Google Calendar
+        </button>
+      </div>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="text-lg ">Loading calendar...</div>
+      </div>
+    );
+  }
+
+  return (
     <div className="flex-1">
       <EventCalendar
         events={filteredEvents}
