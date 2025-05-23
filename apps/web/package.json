@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
+    "build:full": "cd ../../packages/db && bun db:push && cd ../../apps/web && bun run build",
     "build": "next build",
     "start": "next start"
   },
