@@ -47,6 +47,7 @@ import {
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import ThemeToggle from "@/components/theme-toggle";
 import Participants from "@/components/participants";
+import { CommandMenu } from "../command-menu";
 
 export interface EventCalendarProps {
   events?: CalendarEvent[];
@@ -305,6 +306,7 @@ export function EventCalendar({
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center sm:gap-2 max-sm:order-1">
+                <CommandMenu />
                 <Button
                   variant="ghost"
                   size="icon"

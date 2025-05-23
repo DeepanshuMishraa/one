@@ -35,7 +35,7 @@ export function NavUser() {
             >
               <Avatar className="size-8">
                 <AvatarImage src={session?.user?.image as string} alt={session?.user?.name} />
-                <AvatarFallback className="rounded-lg">S</AvatarFallback>
+                <AvatarFallback className="rounded-lg">{session?.user?.name.split(" ")[0].charAt(0)}</AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{session?.user?.name}</span>
