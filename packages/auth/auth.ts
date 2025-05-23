@@ -23,6 +23,9 @@ export const auth = betterAuth({
         "https://www.googleapis.com/auth/calendar.events",
         "https://www.googleapis.com/auth/calendar.events.readonly"
       ],
+      redirectUri: process.env.GOOGLE_REDIRECT_URI as string,
+      accessType: "offline",
+      prompt: "consent"
     }
   },
 
