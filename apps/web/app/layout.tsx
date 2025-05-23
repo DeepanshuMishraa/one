@@ -1,4 +1,3 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import { CalendarProvider } from "@/components/event-calendar/calendar-context";
 import "./globals.css";
 import { Metadata } from "next";
@@ -6,6 +5,7 @@ import QueryProvideR from "providers/providers";
 import { ThemeProvider } from "providers/theme-provider";
 import { ToastProvider } from "components/ui/toast";
 import { TRPCProvider } from "@repo/trpc/client";
+import  localFont  from "next/font/local";
 export const metadata: Metadata = {
   title: "One",
   description: "Chat with your calendar | One",
@@ -64,15 +64,9 @@ export const metadata: Metadata = {
 };
 
 
-const fontSans = Geist({
-  variable: "--font-sans",
-  subsets: ["latin"],
-});
-
-const fontMono = Geist_Mono({
-  variable: "--font-mono",
-  subsets: ["latin"],
-});
+const satoshi = localFont({
+  src:"./fonts/Satoshi-Variable.ttf"
+})
 
 export default function RootLayout({
   children,
@@ -82,7 +76,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${fontSans.variable} ${fontMono.variable} bg-sidebar font-sans antialiased`}
+        className={`${satoshi.className} bg-sidebar font-sans antialiased`}
       >
         <ThemeProvider
           attribute="class"
