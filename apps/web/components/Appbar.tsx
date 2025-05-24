@@ -32,19 +32,19 @@ import { useRouter } from "next/navigation";
 const resources = [
   {
     title: "GitHub",
-    href: "https://github.com/DeepanshuMishraa/one",
+    href: "https://github.com/calendaratone/One",
     description: "Check out our open-source projects and contributions.",
     platform: "github" as const,
   },
   {
     title: "Twitter",
-    href: "https://x.com/Deepanshudipxsy",
+    href: "https://x.com/calendaratone",
     description: "Follow us for the latest updates and announcements.",
     platform: "twitter" as const,
   },
   {
     title: "LinkedIn",
-    href: "https://www.linkedin.com/in/deepanshum",
+    href: "https://www.linkedin.com/company/calendaratone/",
     description: "Connect with us professionally and stay updated.",
     platform: "linkedin" as const,
   },
