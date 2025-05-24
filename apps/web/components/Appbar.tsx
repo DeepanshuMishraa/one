@@ -32,7 +32,7 @@ import { useRouter } from "next/navigation";
 const resources = [
   {
     title: "GitHub",
-    href: "https://github.com/calendaratone/One",
+    href: "https://github.com/DeepanshuMishraa/one",
     description: "Check out our open-source projects and contributions.",
     platform: "github" as const,
   },

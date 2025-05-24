@@ -23,7 +23,7 @@
 
 # About the Project
 
-<img width="100%" alt="Hero" src="https://raw.githubusercontent.com/DeepanshuMishraa/One/refs/heads/main/public/og.png">
+<img width="100%" alt="Hero" src="https://raw.githubusercontent.com/DeepanshuMishraa/one/refs/heads/main/public/img.png">
 
 One is a modern calendar application that lets you interact with your schedule through natural language. No more clicking through complex interfaces - simply tell One what you want to do.
 
@@ -57,7 +57,7 @@ This project is currently in early access. Join the waitlist at [one](https://on
 2. Install dependencies
 
 ```bash
-pnpm install
+bun install
 ```
 
 3. Create a `.env` file and add the following variables:
@@ -73,11 +73,11 @@ GOOGLE_CLIENT_SECRET=
 4. Run the development server
 
 ```bash
-pnpm dev
+bun dev
 ```
 
 4. Build the project
 
 ```bash
-pnpm build
+bun build
 ```
