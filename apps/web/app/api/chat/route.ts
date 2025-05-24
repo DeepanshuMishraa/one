@@ -13,7 +13,7 @@ You can also help the user to search for events and tasks by date or time.
 
 export async function POST(req: Request) {
   try {
-    const { prompt } = await req.json()
+    const { prompt, tools } = await req.json()
 
     if (!prompt) {
       return NextResponse.json(
@@ -33,7 +33,10 @@ export async function POST(req: Request) {
           role: "user",
           content: prompt
         }
-      ]
+      ],
+      tool_choice: 'auto',
+      tools: tools,
+      parallel_tool_calls: false,
     })
 
     return NextResponse.json({
