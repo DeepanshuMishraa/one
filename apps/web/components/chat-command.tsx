@@ -13,13 +13,19 @@ import Image from "next/image"
 import { useSession } from "@repo/auth/client"
 
 interface Message {
-  type: "user" | "ai"
+  type: "user" | "ai" | "tool-execution"
   content: string
   timestamp: Date
 }
 
 interface ChatCommandProps {
   onBack: () => void
+}
+
+interface APIResponse {
+  content: string
+  tool_calls: boolean
+  error?: string
 }
 
 export function ChatCommand({ onBack }: ChatCommandProps) {
@@ -30,17 +36,30 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
   const isSmallScreen = useMediaQuery("(max-width: 640px)")
   const { data: session } = useSession()
 
-  const { mutate: sendMessage, isPending } = useMutation<string | null, Error, string>({
+  const { mutate: sendMessage, isPending } = useMutation<APIResponse, Error, string>({
     mutationFn: async (message: string) => {
       const response = await getLLMResponse(message)
-      return response || null
+      if (response.error) {
+        throw new Error(response.error)
+      }
+      return response
     },
     onSuccess: (response) => {
+      if (response.tool_calls) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: "tool-execution",
+            content: "Checking your calendar...",
+            timestamp: new Date(),
+          },
+        ])
+      }
       setMessages((prev) => [
         ...prev,
         {
           type: "ai",
-          content: response || "No response received.",
+          content: response.content,
           timestamp: new Date(),
         },
       ])
@@ -134,7 +153,7 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
               message.type === "user" ? "justify-end" : "justify-start",
             )}
           >
-            {message.type === "ai" && (
+            {(message.type === "ai" || message.type === "tool-execution") && (
               <Avatar className="h-6 w-6 bg-primary/10">
                 <Image src="/logo.svg" alt="logo" width={24} height={24} />
               </Avatar>
@@ -146,7 +165,9 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
                   "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm",
                   message.type === "user"
                     ? "bg-primary text-primary-foreground rounded-tr-none"
-                    : "bg-muted text-foreground rounded-tl-none",
+                    : message.type === "tool-execution"
+                      ? "bg-muted/50 text-foreground rounded-tl-none"
+                      : "bg-muted text-foreground rounded-tl-none",
                 )}
               >
                 {message.content}

@@ -7,15 +7,20 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.76.1",
+    "@tanstack/react-query": "^5.77.0",
     "@trpc/client": "^11.1.2",
     "@trpc/react-query": "^11.1.2",
-    "@trpc/server": "^11.1.2"
+    "@trpc/server": "^11.1.2",
+    "@trpc/tanstack-react-query": "^11.1.2",
+    "client-only": "^0.0.1",
+    "server-only": "^0.0.1",
+    "zod": "^3.25.28"
   },
   "exports": {
     ".": "./init.ts",
     "./client": "./client.tsx",
-    "./router": "./routers/_app.ts"
+    "./router": "./routers/_app.ts",
+    "./server": "./server.tsx"
   },
   "keywords": [],
   "author": "",
