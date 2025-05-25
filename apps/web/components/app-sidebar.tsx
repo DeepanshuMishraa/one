@@ -3,8 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { RiCheckLine } from "@remixicon/react";
-import { useCalendarContext } from "@/components/event-calendar/calendar-context";
-import { etiquettes } from "@/components/big-calendar";
+import { trpc } from "@repo/trpc/client";
+import type { Calendar } from "@repo/types";
+import { useCalendarStore } from "@/components/big-calendar";
 
 import { NavUser } from "@/components/nav-user";
 import {
@@ -24,15 +25,15 @@ import SidebarCalendar from "@/components/sidebar-calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 import Image from "next/image";
 
-
-
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { isColorVisible, toggleColorVisibility } = useCalendarContext();
+  const { data: calendarData } = trpc.calendar.getCalendars.useQuery();
+  const { activeCalendars, toggleCalendar } = useCalendarStore();
+
   return (
     <Sidebar
       variant="inset"
       {...props}
-      className="dark scheme-only-dark max-lg:p-3 lg:pe-1"
+      className="scheme-only-dark max-lg:p-3 lg:pe-1"
     >
       <SidebarHeader>
         <div className="flex justify-between items-center gap-2">
@@ -54,12 +55,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
         <SidebarGroup className="px-1 mt-3 pt-4 border-t">
           <SidebarGroupLabel className="uppercase text-muted-foreground/65">
-            Calendars
+            My Calendars
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {etiquettes.map((item) => (
-                <SidebarMenuItem key={item.id}>
+              {calendarData?.calendars.map((calendar: Calendar) => (
+                <SidebarMenuItem key={calendar.id}>
                   <SidebarMenuButton
                     asChild
                     className="relative rounded-md [&>svg]:size-auto justify-between has-focus-visible:border-ring has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px]"
@@ -67,12 +68,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     <span>
                       <span className="font-medium flex items-center justify-between gap-3">
                         <Checkbox
-                          id={item.id}
+                          id={calendar.id}
                           className="sr-only peer"
-                          checked={isColorVisible(item.color)}
-                          onCheckedChange={() =>
-                            toggleColorVisibility(item.color)
-                          }
+                          checked={activeCalendars.find((cal: { id: string }) => cal.id === calendar.id)?.isActive ?? true}
+                          onCheckedChange={() => toggleCalendar(calendar.id)}
                         />
                         <RiCheckLine
                           className="peer-not-data-[state=checked]:invisible"
@@ -80,19 +79,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           aria-hidden="true"
                         />
                         <label
-                          htmlFor={item.id}
+                          htmlFor={calendar.id}
                           className="peer-not-data-[state=checked]:line-through peer-not-data-[state=checked]:text-muted-foreground/65 after:absolute after:inset-0"
                         >
-                          {item.name}
+                          {calendar.summary}
                         </label>
                       </span>
                       <span
-                        className="size-1.5 rounded-full bg-(--event-color)"
-                        style={
-                          {
-                            "--event-color": `var(--color-${item.color}-400)`,
-                          } as React.CSSProperties
-                        }
+                        className="size-1.5 rounded-full"
+                        style={{ backgroundColor: calendar.backgroundColor }}
                       ></span>
                     </span>
                   </SidebarMenuButton>
@@ -103,7 +98,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
-        <NavUser  />
+        <NavUser />
       </SidebarFooter>
     </Sidebar>
   );
