@@ -1,5 +1,5 @@
 import OpenAI from "openai";
-
+import { CalendarEventsTool, getCalendarEventsToolDefination } from "./tools/calendar";
 
 export const runTool = async (toolCall: OpenAI.Chat.Completions.ChatCompletionMessageToolCall, userMessage: string) => {
   const input = {
@@ -8,12 +8,10 @@ export const runTool = async (toolCall: OpenAI.Chat.Completions.ChatCompletionMe
   }
 
   switch (toolCall.function.name) {
-    case "get_calendar_events":
-      return; // getCalendarEvents(input)
-
+    case getCalendarEventsToolDefination.name:
+      return CalendarEventsTool(input);
     case "schedule_event":
       return; // scheduleEvent(input)
-
     default:
       throw new Error(`Unknown tool: ${toolCall.function.name}`)
   }
