@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { trpc } from "@repo/trpc/client";
+import { create } from 'zustand';
 
 import {
   EventCalendar,
@@ -10,82 +11,105 @@ import {
 } from "@/components/event-calendar";
 import { signIn } from "@repo/auth/client";
 
+
 export const etiquettes = [
   {
-    id: "my-events",
-    name: "My Events",
-    color: "emerald" as EventColor,
-    isActive: true,
+    id: "1",
+    name: "Work",
+    color: "#039BE5",
   },
   {
-    id: "marketing-team",
-    name: "Marketing Team",
-    color: "orange" as EventColor,
-    isActive: true,
+    id: "2",
+    name: "Personal",
+    color: "#7986CB",
   },
-  {
-    id: "interviews",
-    name: "Interviews",
-    color: "violet" as EventColor,
-    isActive: true,
-  },
-  {
-    id: "events-planning",
-    name: "Events Planning",
-    color: "blue" as EventColor,
-    isActive: true,
-  },
-  {
-    id: "holidays",
-    name: "Holidays",
-    color: "rose" as EventColor,
-    isActive: true,
-  },
-];
 
-const colorMap: { [key: string]: EventColor } = {
-  "1": "blue",
-  "2": "emerald",
-  "3": "violet",
-  "4": "rose",
-  "5": "orange",
-  "6": "blue",
-  "7": "violet",
-  "8": "emerald",
-  "9": "orange",
-  "10": "rose",
-  "11": "blue",
+]
+
+// TODO: seperate store for zustand 
+
+interface CalendarState {
+  activeCalendars: { id: string; isActive: boolean }[];
+  setActiveCalendars: (calendars: { id: string; isActive: boolean }[]) => void;
+  toggleCalendar: (calendarId: string) => void;
+}
+
+export const useCalendarStore = create<CalendarState>()((set) => ({
+  activeCalendars: [],
+  setActiveCalendars: (calendars: { id: string; isActive: boolean }[]) =>
+    set(() => ({ activeCalendars: calendars })),
+  toggleCalendar: (calendarId: string) =>
+    set((state) => ({
+      activeCalendars: state.activeCalendars.map((cal) =>
+        cal.id === calendarId ? { ...cal, isActive: !cal.isActive } : cal
+      ),
+    })),
+}));
+
+export const getEventColor = (backgroundColor: string): EventColor => {
+  // Convert hex color to a predefined EventColor
+  const colorMap: { [key: string]: EventColor } = {
+    '#039BE5': 'blue',    // Default blue
+    '#7986CB': 'violet',  // Indigo-ish
+    '#33B679': 'emerald', // Green
+    '#E67C73': 'rose',    // Red-ish
+    '#F6BF26': 'orange',  // Yellow/Orange
+  };
+
+  // Default mappings for common Google Calendar colors
+  const defaultColorMap: { [key: string]: EventColor } = {
+    '#D47483': 'rose',
+    '#92E1C0': 'emerald',
+    '#9FC6E7': 'blue',
+    '#9EA1FF': 'violet',
+    '#FED965': 'orange',
+  };
+
+  return colorMap[backgroundColor] || defaultColorMap[backgroundColor] || 'blue';
 };
 
 export default function Component() {
-  const [activeEtiquettes, setActiveEtiquettes] = useState(etiquettes);
+  const { data: calendarData, isLoading: calendarLoading } = trpc.calendar.getCalendars.useQuery();
+  const [activeCalendars, setActiveCalendars] = useState<{ id: string; isActive: boolean }[]>([]);
 
-  const { data: calendarData, isLoading, error } = trpc.calendar.getCalendarEvents.useQuery(undefined, {
-    retry: false, 
+  const { data: eventsData, isLoading: eventsLoading, error } = trpc.calendar.getCalendarEvents.useQuery(undefined, {
+    retry: false,
   });
+  useMemo(() => {
+    if (calendarData?.calendars && activeCalendars.length === 0) {
+      setActiveCalendars(
+        calendarData.calendars.map((cal) => ({
+          id: cal.id,
+          isActive: true,
+        }))
+      );
+    }
+  }, [calendarData?.calendars]);
 
   const events = useMemo(() => {
-    if (!calendarData?.events) return [];
+    if (!eventsData?.events) return [];
 
-    return calendarData.events.map((event): CalendarEvent => {
+    return eventsData.events.map((event): CalendarEvent => {
       return {
         id: event.id,
         title: event.title,
         description: event.description || "",
         start: new Date(event.start),
         end: new Date(event.end),
-        color: event.color || "blue",
+        color: event.calendar ? getEventColor(event.calendar.backgroundColor) : "blue",
         location: event.location || "",
       };
     });
-  }, [calendarData?.events]);
+  }, [eventsData?.events]);
 
   const filteredEvents = useMemo(() => {
     return events.filter((event) => {
-      const eventEtiquette = activeEtiquettes.find((e) => e.color === event.color);
-      return eventEtiquette?.isActive ?? false;
+      const eventCalendar = eventsData?.events.find(e => e.id === event.id)?.calendar;
+      if (!eventCalendar) return true;
+      const isActive = activeCalendars.find(cal => cal.id === eventCalendar.id)?.isActive ?? true;
+      return isActive;
     });
-  }, [events, activeEtiquettes]);
+  }, [events, activeCalendars, eventsData?.events]);
 
   const utils = trpc.useContext();
   const createEventMutation = trpc.calendar.createCalendarEvent.useMutation({
@@ -148,13 +172,21 @@ export default function Component() {
     });
   };
 
+  const handleCalendarToggle = (calendarId: string) => {
+    setActiveCalendars(prev =>
+      prev.map(cal =>
+        cal.id === calendarId ? { ...cal, isActive: !cal.isActive } : cal
+      )
+    );
+  };
+
   if (error?.message?.includes("reconnect your Google account")) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-4">
-        <div className="text-lg font-medium ">
+        <div className="text-lg font-medium">
           Please connect your Google Calendar to continue
         </div>
-        <p className="text-sm  max-w-md text-center">
+        <p className="text-sm max-w-md text-center">
           We need access to your Google Calendar to show and manage your events. Click below to connect your account.
         </p>
         <button
@@ -167,10 +199,10 @@ export default function Component() {
     );
   }
 
-  if (isLoading) {
+  if (calendarLoading || eventsLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-lg ">Loading calendar...</div>
+        <div className="text-lg">Loading calendar...</div>
       </div>
     );
   }

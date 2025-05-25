@@ -57,6 +57,15 @@ export interface Attendee {
   organizer: boolean;
 }
 
+export interface Calendar {
+  id: string;
+  summary: string;
+  backgroundColor: string;
+  primary?: boolean;
+  accessRole?: string;
+  selected?: boolean;
+}
+
 export interface CalendarEvent {
   id: string;
   title: string;
@@ -68,6 +77,7 @@ export interface CalendarEvent {
   label?: string;
   location?: string;
   attendees?: Attendee[];
+  calendar?: Calendar;
 }
 
 export interface CalendarEventResponse {

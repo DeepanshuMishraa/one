@@ -169,7 +169,6 @@ export async function POST(req: Request) {
       }
     ], userId)
 
-    // Handle tool calls
     if (message.tool_calls?.length) {
       const toolResults = await Promise.all(
         message.tool_calls.map(async (toolCall) => {
@@ -184,7 +183,7 @@ export async function POST(req: Request) {
         })
       );
 
-      // Store tool results
+
       const toolMessages = message.tool_calls.map((toolCall, index) => ({
         role: "tool" as const,
         content: toolResults[index] || "No result",

@@ -1,7 +1,7 @@
 import { baseProcedure, createTRPCRouter } from "../init";
 import { db } from "@repo/db";
 import { calendar_events } from "@repo/db/schema";
-import { CalendarEvent, EventColor } from "@repo/types";
+import { CalendarEvent, EventColor, Calendar } from "@repo/types";
 import {
   createCalendarEventSchema,
   deleteCalendarEventSchema,
@@ -25,6 +25,42 @@ const colorMap: { [key: string]: EventColor } = {
 };
 
 export const calendarRouter = createTRPCRouter({
+  getCalendars: baseProcedure.query(async () => {
+    try {
+      const session = await GetUserSession();
+      const userId = session.id;
+      const calendar = await getCalendarClient(userId);
+
+      const calendarList = await calendar.calendarList.list();
+
+      const calendars: Calendar[] = calendarList.data.items?.map(cal => ({
+        id: cal.id || '',
+        summary: cal.summary || '',
+        backgroundColor: cal.backgroundColor || '#039BE5',
+        primary: cal.primary || false,
+        accessRole: cal.accessRole || 'reader',
+        selected: cal.selected || false
+      })) || [];
+
+      return {
+        calendars,
+        status: 200
+      };
+    } catch (error) {
+      console.error('Calendar list fetch error:', error);
+      if (error instanceof Error) {
+        if (error.message.includes('invalid_grant') || error.message.includes('Token has been expired')) {
+          throw new Error("Your Google account session has expired. Please reconnect your Google account.");
+        }
+        if (error.message.includes('insufficient authentication scopes')) {
+          throw new Error("Insufficient permissions. Please reconnect your Google account with proper calendar access.");
+        }
+        throw new Error(error.message);
+      }
+      throw new Error("Failed to fetch calendar list");
+    }
+  }),
+
   getCalendarEvents: baseProcedure.query(async () => {
     try {
       const session = await GetUserSession();
@@ -70,10 +106,23 @@ export const calendarRouter = createTRPCRouter({
 
       const colors = await calendar.colors.get();
       const eventColors = colors.data.event || {};
+      const myCalendars = await calendar.calendarList.list();
+
+      const transformCalendar = (calendarItem: any): Calendar | undefined => {
+        if (!calendarItem) return undefined;
+        return {
+          id: calendarItem.id || '',
+          summary: calendarItem.summary || '',
+          backgroundColor: calendarItem.backgroundColor || '#039BE5',
+          primary: calendarItem.primary || false,
+          accessRole: calendarItem.accessRole || 'reader',
+          selected: calendarItem.selected || false
+        };
+      };
 
       const fetchEventsWithRetry = async (calendarId: string, isHoliday = false) => {
         try {
-          return await calendar.events.list({
+          const response = await calendar.events.list({
             calendarId,
             timeMin: new Date(new Date().getFullYear() - 1, 0, 1).toISOString(),
             timeMax: new Date(new Date().getFullYear() + 1, 11, 31).toISOString(),
@@ -81,6 +130,7 @@ export const calendarRouter = createTRPCRouter({
             orderBy: 'startTime',
             ...(calendarId === 'primary' && { maxResults: 2500 }),
           });
+          return response;
         } catch (error) {
           if (isHoliday) {
             console.warn('Holiday calendar access failed:', error);
@@ -90,49 +140,64 @@ export const calendarRouter = createTRPCRouter({
         }
       };
 
-      const response = await fetchEventsWithRetry('primary');
-      const holidayResponse = await fetchEventsWithRetry(holidayCalendarId, true);
+      // Fetch events from all calendars
+      const calendarPromises = myCalendars.data.items?.map(async (cal) => {
+        if (cal.id) {
+          return fetchEventsWithRetry(cal.id);
+        }
+        return { data: { items: [] } };
+      }) || [];
 
-      const events = response.data.items || [];
-      const holidayEvents = holidayResponse.data.items || [];
-      const allEvents = [...events, ...holidayEvents];
+      // Add holiday calendar
+      calendarPromises.push(fetchEventsWithRetry(holidayCalendarId, true));
 
-      const transformedEvents = allEvents.map(event => {
-        const startDateTime = event.start?.dateTime || event.start?.date;
-        const endDateTime = event.end?.dateTime || event.end?.date;
+      const calendarResponses = await Promise.all(calendarPromises);
+      const allEvents = calendarResponses.flatMap(response => response.data.items || []);
 
-        if (!startDateTime || !endDateTime) return null;
+      const transformedEvents = allEvents
+        .filter(event => event.start?.dateTime || event.start?.date)
+        .map(event => {
+          const startDateTime = event.start?.dateTime || event.start?.date;
+          const endDateTime = event.end?.dateTime || event.end?.date;
 
-        const attendees = event.attendees?.map(attendee => ({
-          email: attendee.email || '',
-          displayName: attendee.displayName || undefined,
-          photoUrl: undefined,
-          responseStatus: attendee.responseStatus || 'needsAction',
-          optional: attendee.optional || false,
-          organizer: attendee.organizer || false
-        })) || [];
+          if (!startDateTime || !endDateTime) return null;
 
-        const isHoliday = holidayEvents.includes(event);
-        const color = event.colorId
-          ? colorMap[event.colorId] || "blue"
-          : isHoliday
-            ? "rose"
-            : "blue";
+          const attendees = event.attendees?.map(attendee => ({
+            email: attendee.email || '',
+            displayName: attendee.displayName || undefined,
+            photoUrl: undefined,
+            responseStatus: attendee.responseStatus || 'needsAction',
+            optional: attendee.optional || false,
+            organizer: attendee.organizer || false
+          })) || [];
 
-        const calendarEvent: CalendarEvent = {
-          id: event.id || '',
-          title: event.summary || 'Untitled Event',
-          description: event.description || undefined,
-          start: new Date(startDateTime),
-          end: new Date(endDateTime),
-          allDay: !event.start?.dateTime,
-          location: event.location || undefined,
-          attendees,
-          color
-        };
+          const isHoliday = event.organizer?.email === holidayCalendarId;
+          const color = event.colorId
+            ? colorMap[event.colorId] || "blue"
+            : isHoliday
+              ? "rose"
+              : "blue";
 
-        return calendarEvent;
-      }).filter((event): event is CalendarEvent => event !== null);
+          const sourceCalendar = myCalendars.data.items?.find(cal =>
+            cal.id === event.organizer?.email || cal.primary
+          );
+
+          const calendarEvent: CalendarEvent = {
+            id: event.id || '',
+            title: event.summary || 'Untitled Event',
+            description: event.description || undefined,
+            start: new Date(startDateTime),
+            end: new Date(endDateTime),
+            allDay: !event.start?.dateTime,
+            location: event.location || undefined,
+            attendees,
+            color,
+            calendar: sourceCalendar ? transformCalendar(sourceCalendar) : undefined
+          };
+
+          return calendarEvent;
+        })
+        .filter((event): event is CalendarEvent => event !== null);
 
       for (const event of transformedEvents) {
         await db
@@ -181,7 +246,6 @@ export const calendarRouter = createTRPCRouter({
         }
         throw new Error(error.message);
       }
-
       throw new Error("Failed to fetch calendar events");
     }
   }),

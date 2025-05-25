@@ -1,5 +1,4 @@
 "use client";
-import { RainbowButton } from "./ui/rainbow-button";
 import { Mockup } from "./ui/mockup";
 import { StarsBackground } from "./ui/stars";
 import { Input } from "./ui/input";
@@ -66,10 +65,6 @@ export default function Hero() {
     <>
       <StarsBackground className="flex flex-col min-h-[100vh]">
         <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-center space-y-4 px-4 py-10 mt-16 sm:mt-20 sm:space-y-5 sm:px-6 sm:py-16 md:space-y-6">
-          <RainbowButton size="lg" className="rounded-full text-xs sm:text-sm lg:text-base font-mono">
-            One
-          </RainbowButton>
-
           <h1 className="mt-4 text-center text-3xl font-bold sm:mt-6 sm:text-4xl md:text-5xl lg:text-6xl">
             Talk to your calendar
           </h1>
