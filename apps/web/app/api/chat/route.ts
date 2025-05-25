@@ -2,191 +2,274 @@ import { NextResponse } from "next/server"
 import { openai } from "@/lib/ai"
 import { getCalendarEventsToolDefination } from "@/lib/tools/calendar"
 import { runTool } from "@/lib/toolRunner"
-import { ChatCompletionMessage, ChatCompletionMessageParam } from "openai/resources/chat/completions"
-import { generateEmbeddings } from "@/lib/embedding"
-import { queryPinecone, upsertToPinecone } from "@/lib/pinecone"
-import { v4 as uuidv4 } from 'uuid'
+import { ChatCompletionMessageParam } from "openai/resources/chat/completions"
 import { auth } from "@repo/auth/auth"
 import { headers } from "next/headers"
+import { getMemory, setMemory, toOpenAIMessages } from "@/lib/memory"
 
-type EmbeddingResponse = {
-  embedding: number[];
-  content: string;
-}
 
+const MEMORY_WINDOW_SIZE = 10;
 
 const SYSTEM_PROMPT = `
-You are One, a helpful and conversational AI assistant with perfect memory of your conversations.
+You are one, an AI assistant with memory of recent conversations. You can remember and reference information shared within the current conversation context (last ${MEMORY_WINDOW_SIZE} messages).
 
-You MUST use the provided conversation history to maintain context and recall information. When users ask about previously shared information, ALWAYS check the conversation history first and use that information in your response.
+You can help the user to:
+- View calendar events for specific dates or date ranges
+- Check today's events
+- Search for events by name or description
+- Get event details including attendees and location
 
-Your primary focus is helping users manage their calendar and events, but you also:
-- Remember and reference details users share with you
-- Maintain conversation context across messages
-- Use specific information from previous messages when answering questions
+When asked about events for "today" or "now", you should use the current date.
+When asked about specific dates, use those dates in your tool calls.
+Always format dates as ISO strings (YYYY-MM-DD) when making tool calls.
 
-Guidelines:
-- ALWAYS check conversation history before saying you don't have information
-- If you find relevant information in the history, use it confidently
-- When users ask about previously mentioned details, reference when/how you learned that information
-- For calendar-related queries, use ISO format dates
-- Be personable while maintaining accuracy and context
-
-Remember: You have access to the full conversation history. Use it to provide informed, contextual responses.
+Important memory guidelines:
+- You can reference information from recent messages in the current conversation
+- If asked about something mentioned in the current conversation, use that context to respond
+- If asked about something from a past conversation that's not in current context, politely explain that you can only access recent messages
+- Be transparent about your memory limitations while staying helpful
 `
-
 
 const AVAILABLE_TOOLS = [{
   type: "function" as const,
   function: getCalendarEventsToolDefination
 }]
 
+// Enhanced message validation for Gemini
+function validateMessagesForGemini(messages: ChatCompletionMessageParam[]): ChatCompletionMessageParam[] {
+  const validMessages: ChatCompletionMessageParam[] = [];
+
+  for (const msg of messages) {
+    if (msg.role === 'system' && msg.content && typeof msg.content === 'string') {
+      validMessages.push({ role: 'system', content: msg.content });
+      continue;
+    }
+
+    if (msg.role === 'user' && msg.content && typeof msg.content === 'string') {
+      validMessages.push({ role: 'user', content: msg.content });
+      continue;
+    }
+
+    if (msg.role === 'assistant') {
+      const assistantMsg: ChatCompletionMessageParam = {
+        role: 'assistant',
+        content: msg.content || null
+      };
+
+      if (msg.tool_calls?.length) {
+        assistantMsg.tool_calls = msg.tool_calls;
+      }
+
+      if (assistantMsg.content || assistantMsg.tool_calls) {
+        validMessages.push(assistantMsg);
+      }
+      continue;
+    }
+
+    if (msg.role === 'tool' && msg.content && msg.tool_call_id) {
+      validMessages.push({
+        role: 'tool',
+        content: typeof msg.content === 'string' ? msg.content : JSON.stringify(msg.content),
+        tool_call_id: msg.tool_call_id
+      });
+    }
+  }
+
+  return validMessages;
+}
+
+// Helper to ensure proper message sequence
+function ensureProperMessageSequence(messages: ChatCompletionMessageParam[]): ChatCompletionMessageParam[] {
+  const result: ChatCompletionMessageParam[] = [];
+  let lastRole = '';
+
+  for (const msg of messages) {
+    if (msg.role === lastRole && msg.role !== 'system') {
+      continue;
+    }
+
+    if (msg.role === 'tool') {
+      const lastMsg = result[result.length - 1];
+      if (!lastMsg || lastMsg.role !== 'assistant' || !lastMsg.tool_calls) {
+        continue;
+      }
+    }
+
+    result.push(msg);
+    lastRole = msg.role;
+  }
+
+  return result;
+}
+
 export async function POST(req: Request) {
+  let userId: string | undefined;
+
   try {
+    const { prompt } = await req.json()
+
+    if (!prompt) {
+      return NextResponse.json(
+        { error: "Prompt is required" },
+        { status: 400 }
+      )
+    }
+
     const session = await auth.api.getSession({
       headers: await headers()
-    });
+    })
 
-    const { prompt, conversationId: clientConversationId } = await req.json()
-    if (!prompt) {
-      return NextResponse.json({ error: "Prompt required" }, { status: 400 })
+    if (!session?.user) {
+      return NextResponse.json({
+        error: "Unauthorized"
+      }, { status: 401 })
     }
 
-    const conversationId = clientConversationId || 'conv-' + uuidv4();
-    console.log('Using conversation ID:', conversationId);
+    userId = session.user.id
 
-    const embeddings = await generateEmbeddings(prompt)
-    if (!embeddings[0]?.embedding) {
-      console.error('Failed to generate embedding for prompt');
-      return NextResponse.json({ error: "Failed to process message" }, { status: 500 });
-    }
-    const embedding = embeddings[0].embedding;
+    // Get existing conversation history
+    const conversationStore = await getMemory(userId)
+    const history = toOpenAIMessages(conversationStore)
 
-    const previousMessages = await queryPinecone(embedding, conversationId);
-
-    const memoryMessages: ChatCompletionMessageParam[] = previousMessages.map(mem => {
-    const memoryMessages: ChatCompletionMessageParam[] = previousMessages.map(mem => {
-      if (mem.role === "tool") {
-        return {
-          role: "tool" as const,
-          content: typeof mem.content === 'string' ? mem.content : String(mem.content ?? ""),
-          tool_call_id: "previous_tool_call"
-        }
-      }
-      return {
-        role: mem.role as "assistant" | "user" | "system",
-        content: typeof mem.content === 'string' ? mem.content : String(mem.content ?? "")
-      }
-    });
-
+    // Create messages array
     const messages: ChatCompletionMessageParam[] = [
       { role: "system", content: SYSTEM_PROMPT },
-      ...memoryMessages,
-      { role: "user", content: String(prompt) }
+      ...history,
+      { role: "user", content: prompt }
     ]
+
+    // Validate and clean messages
+    const validMessages = validateMessagesForGemini(messages);
+    const sequentialMessages = ensureProperMessageSequence(validMessages);
 
     const response = await openai.chat.completions.create({
       model: "gemini-2.0-flash",
-      messages,
+      messages: sequentialMessages,
       tools: AVAILABLE_TOOLS,
-      tool_choice: "auto"
-    })
+      tool_choice: "auto",
+      temperature: 0.7,
+      max_tokens: 2000
+    });
 
     const message = response.choices[0]?.message
-    if (!message) return NextResponse.json({ error: "No response from AI" }, { status: 500 })
 
-    // Store user message
-    await upsertToPinecone({
-      id: uuidv4(),
-      content: prompt,
-      embedding,
-      sessionId: conversationId,
-      role: "user"
-    })
+    if (!message) {
+      return NextResponse.json({
+        error: "No response from AI"
+      }, { status: 500 })
+    }
 
+    // Store the user prompt and AI response
+    await setMemory([
+      { role: "user", content: prompt },
+      {
+        role: "assistant",
+        content: message.content || "",
+        tool_calls: message.tool_calls
+      }
+    ], userId)
+
+    // Handle tool calls
     if (message.tool_calls?.length) {
       const toolResults = await Promise.all(
-        message.tool_calls.map(tc => runTool(tc, prompt))
-      )
-
-      await Promise.all(toolResults.map(async (res) => {
-        if (res) {
-          const resultEmbeddings = await generateEmbeddings(res)
-          if (resultEmbeddings[0]?.embedding) {
-            return upsertToPinecone({
-              id: uuidv4(),
-              content: res,
-              embedding: resultEmbeddings[0].embedding,
-              sessionId: conversationId,
-              role: "tool"
-            })
-          }
-        }
-        return Promise.resolve()
-      }))
-      const toolMessages = toolResults
-        .map((result, index) => {
-          const toolCallId = message.tool_calls?.[index]?.id
-          if (!toolCallId) return null
-          return {
-            role: "tool" as const,
-            content: result || "",
-            tool_call_id: toolCallId
+        message.tool_calls.map(async (toolCall) => {
+          try {
+            return await runTool(toolCall, prompt);
+          } catch (error) {
+            return JSON.stringify({
+              error: "Tool execution failed",
+              message: error instanceof Error ? error.message : "Unknown error"
+            });
           }
         })
-        .filter((msg): msg is { role: "tool", content: string, tool_call_id: string } => msg !== null);
+      );
 
-      const updatedMessages: ChatCompletionMessageParam[] = [
-        ...messages,
-        {
-          role: "assistant",
-          content: message.content || "",
-          tool_calls: message.tool_calls
-        },
-        ...toolMessages
-      ]
+      // Store tool results
+      const toolMessages = message.tool_calls.map((toolCall, index) => ({
+        role: "tool" as const,
+        content: toolResults[index] || "No result",
+        tool_call_id: toolCall.id
+      }));
 
-      const followUp = await openai.chat.completions.create({
-        model: "gemini-2.0-flash",
-        messages: updatedMessages,
-        temperature: 0.7
-      })
+      await setMemory(toolMessages, userId);
 
-      const reply = followUp.choices[0]?.message?.content || "No response from AI"
-      const replyEmbeddings = await generateEmbeddings(reply)
-      const { embedding: replyEmbedding } = replyEmbeddings[0] as EmbeddingResponse
-      await upsertToPinecone({
-        id: uuidv4(),
-        content: reply,
-        embedding: replyEmbedding,
-        sessionId: conversationId,
-        role: "assistant"
-      })
+      // Get updated history for follow-up
+      const updatedStore = await getMemory(userId);
+      const updatedHistory = toOpenAIMessages(updatedStore);
 
-      return NextResponse.json({
-        content: reply,
-        tool_calls: true,
-        conversationId
-      })
+      // Create follow-up messages with careful validation
+      const followUpMessages = [
+        { role: "system", content: SYSTEM_PROMPT },
+        ...updatedHistory
+      ];
+
+      // Validate and sequence messages for follow-up
+      const validFollowUpMessages = validateMessagesForGemini(followUpMessages as ChatCompletionMessageParam[]);
+      const sequentialFollowUpMessages = ensureProperMessageSequence(validFollowUpMessages);
+
+      try {
+        const followUp = await openai.chat.completions.create({
+          model: "gemini-2.0-flash",
+          messages: sequentialFollowUpMessages,
+          tools: AVAILABLE_TOOLS,
+          tool_choice: "auto",
+          temperature: 0.7,
+          max_tokens: 2000
+        });
+
+        const followUpContent = followUp.choices[0]?.message.content || "No response from AI"
+
+        // Store the AI follow-up
+        await setMemory([
+          { role: "assistant", content: followUpContent }
+        ], userId)
+
+        return NextResponse.json({
+          content: followUpContent,
+          tool_calls: true
+        });
+
+      } catch (followUpError) {
+        const combinedContent = `Based on your calendar, here's what I found:\n\n${toolResults.join('\n\n')}`;
+
+        await setMemory([
+          { role: "assistant", content: combinedContent }
+        ], userId)
+
+        return NextResponse.json({
+          content: combinedContent,
+          tool_calls: true
+        });
+      }
     }
-    const replyEmbeddings = await generateEmbeddings(message.content || "")
-    const { embedding: replyEmbedding } = replyEmbeddings[0] as EmbeddingResponse
-    await upsertToPinecone({
-      id: uuidv4(),
-      content: message.content || "",
-      embedding: replyEmbedding,
-      sessionId: conversationId,
-      role: "assistant"
-    })
 
     return NextResponse.json({
       content: message.content,
-      tool_calls: false,
-      conversationId
+      tool_calls: false
     })
 
   } catch (error) {
-    console.error("Chat API Error:", error)
-    return NextResponse.json({ error: "Internal error occurred" }, { status: 500 })
+    if (userId) {
+      try {
+        const lastStore = await getMemory(userId)
+        const lastMessages = lastStore.messages
+        const lastMessage = lastMessages[lastMessages.length - 1]
+
+        if (lastMessage?.role === 'assistant') {
+          return NextResponse.json({
+            content: lastMessage.content,
+            tool_calls: !!lastMessage.tool_calls
+          })
+        }
+      } catch (recoveryError) { }
+    }
+
+    return NextResponse.json(
+      {
+        error: "Failed to get response from AI",
+        details: error instanceof Error ? error.message : "Unknown error"
+      },
+      { status: 500 }
+    )
   }
 }

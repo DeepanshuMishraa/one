@@ -26,40 +26,25 @@ interface APIResponse {
   content: string
   tool_calls: boolean
   error?: string
-  conversationId: string
 }
 
 export function ChatCommand({ onBack }: ChatCommandProps) {
   const [messages, setMessages] = React.useState<Message[]>([])
   const [currentMessage, setCurrentMessage] = React.useState("")
-  const [conversationId, setConversationId] = React.useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('conversationId')
-    }
-    return null
-  })
   const chatContainerRef = React.useRef<HTMLDivElement>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
   const isSmallScreen = useMediaQuery("(max-width: 640px)")
   const { data: session } = useSession()
 
-  React.useEffect(() => {
-    if (conversationId) {
-      localStorage.setItem('conversationId', conversationId)
-    }
-  }, [conversationId])
-
   const { mutate: sendMessage, isPending } = useMutation<APIResponse, Error, string>({
     mutationFn: async (message: string) => {
-      const response = await getLLMResponse(message, conversationId)
+      const response = await getLLMResponse(message)
       if (response.error) {
         throw new Error(response.error)
       }
       return response
     },
     onSuccess: (response) => {
-      setConversationId(response.conversationId)
-
       if (response.tool_calls) {
         setMessages((prev) => [
           ...prev,

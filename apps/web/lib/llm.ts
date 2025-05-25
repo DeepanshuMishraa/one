@@ -1,7 +1,16 @@
-export async function getLLMResponse(message: string, conversationId?: string | null) {
+export const getLLMResponse = async (prompt: string) => {
   const response = await fetch("/api/chat", {
     method: "POST",
-    body: JSON.stringify({ prompt: message, conversationId }),
-  });
-  return response.json();
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ prompt }),
+  })
+
+  if (!response.ok) {
+    throw new Error("Failed to get AI response")
+  }
+
+  const data = await response.json()
+  return data
 } 
