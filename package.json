@@ -25,6 +25,7 @@
     "packages/*"
   ],
   "dependencies": {
+    "@pinecone-database/pinecone": "^6.0.1",
     "@tanstack/react-query": "^5.76.2"
   }
 }
