@@ -5,7 +5,6 @@ import { CalendarEventsTool } from "@/lib/tools/calendar";
 import { groq } from "@ai-sdk/groq";
 import { auth } from "@repo/auth/auth";
 import { headers } from "next/headers";
-import Supermemory from "supermemory";
 import { Message } from "mem0ai";
 
 const MEMORY_WINDOW_SIZE = 10;
