@@ -11,22 +11,8 @@ import { Button } from "@/components/ui/button"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import Image from "next/image"
 import { useSession } from "@repo/auth/client"
+import { type ChatCommandProps, type Message, type APIResponse, type ToolResult } from "@repo/types"
 
-interface Message {
-  type: "user" | "ai" | "tool-execution"
-  content: string
-  timestamp: Date
-}
-
-interface ChatCommandProps {
-  onBack: () => void
-}
-
-interface APIResponse {
-  content: string
-  tool_calls: boolean
-  error?: string
-}
 
 export function ChatCommand({ onBack }: ChatCommandProps) {
   const [messages, setMessages] = React.useState<Message[]>([])
@@ -45,34 +31,60 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
       return response
     },
     onSuccess: (response) => {
-      if (response.tool_calls) {
+      console.log("Received response:", response)
+
+      // Handle tool execution
+      if (response.hasToolCalls && response.toolCalls.length > 0) {
+        // Add tool execution message
         setMessages((prev) => [
           ...prev,
           {
             type: "tool-execution",
-            content: "Checking your calendar...",
+            content: getToolExecutionMessage(response?.toolCalls[0]?.toolName || "Unknown tool"),
+            timestamp: new Date(),
+          },
+        ])
+
+        // Process tool results
+        if (response.toolResults && response.toolResults.length > 0) {
+          response.toolResults.forEach((toolResult) => {
+            const resultContent = formatToolResult(toolResult)
+            if (resultContent) {
+              setMessages((prev) => [
+                ...prev,
+                {
+                  type: "tool-result",
+                  content: resultContent,
+                  timestamp: new Date(),
+                  toolData: toolResult.result,
+                },
+              ])
+            }
+          })
+        }
+      }
+      if (response.content && response.content.trim()) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: "ai",
+            content: response.content,
             timestamp: new Date(),
           },
         ])
       }
-      setMessages((prev) => [
-        ...prev,
-        {
-          type: "ai",
-          content: response.content,
-          timestamp: new Date(),
-        },
-      ])
+
       setCurrentMessage("")
       scrollToBottom()
       inputRef.current?.focus()
     },
     onError: (error: Error) => {
+      console.error("Chat error:", error)
       setMessages((prev) => [
         ...prev,
         {
           type: "ai",
-          content: "Failed to get response. Please try again.",
+          content: "Sorry, I encountered an error while processing your request. Please try again.",
           timestamp: new Date(),
         },
       ])
@@ -80,6 +92,77 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
       inputRef.current?.focus()
     },
   })
+
+  const getToolExecutionMessage = (toolName: string): string => {
+    switch (toolName) {
+      case "getWeather":
+        return "Getting weather..."
+      case "getCalendarEvents":
+        return "Checking calendar..."
+      default:
+        return "Processing..."
+    }
+  }
+
+  const formatToolResult = (toolResult: ToolResult): string | null => {
+    if (toolResult.toolName === "getWeather") {
+      const weather = toolResult.result
+
+      if (weather.error) {
+        return `Unable to fetch weather data: ${weather.error}`
+      }
+
+      return `${weather.location}, ${weather.country}
+${weather.temperature}°C • ${weather.condition}
+Feels like ${weather.feelsLike}°C • ${weather.humidity}% humidity
+Wind ${weather.windSpeed} km/h`
+    }
+
+    if (toolResult.toolName === "getCalendarEvents") {
+      const calendarData = toolResult.result
+
+      if (calendarData.error) {
+        return `${calendarData.message || calendarData.error}`
+      }
+
+      if (!calendarData.events || calendarData.events.length === 0) {
+        return `${calendarData.message}`
+      }
+
+      let result = `${calendarData.message}\n\n`
+
+      calendarData.events.forEach((event: any, index: number) => {
+        const startDate = new Date(event.start)
+        const endDate = new Date(event.end)
+        const startTime = startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        const endTime = endDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+        const dateStr = startDate.toLocaleDateString([], { month: "short", day: "numeric" })
+
+        result += `${event.title}\n`
+        result += `${dateStr} • ${startTime} - ${endTime}`
+
+        if (event.location && event.location !== "No location specified") {
+          result += ` • ${event.location}`
+        }
+
+        if (event.description && event.description !== "No description") {
+          result += `\n${event.description}`
+        }
+
+        if (event.attendees && event.attendees.length > 0) {
+          result += `\nWith ${event.attendees.map((a: any) => a.name).join(", ")}`
+        }
+
+        if (index < calendarData.events.length - 1) {
+          result += "\n\n"
+        }
+      })
+
+      return result
+    }
+
+    return null
+  }
 
   const handleSubmit = (e?: React.FormEvent) => {
     e?.preventDefault()
@@ -119,8 +202,19 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
     inputRef.current?.focus()
   }, [])
 
+  React.useEffect(() => {
+    scrollToBottom()
+  }, [messages])
+
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  }
+
+  const renderMessageContent = (message: Message) => {
+    if (message.type === "tool-result") {
+      return <div className="whitespace-pre-line text-sm">{message.content}</div>
+    }
+    return message.content
   }
 
   return (
@@ -140,7 +234,7 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-muted-foreground">
               <p className="text-sm">Start a conversation</p>
-              <p className="text-xs mt-1">Type a message below to begin</p>
+              <p className="text-xs mt-1">Ask me about the weather, your calendar, or anything else!</p>
             </div>
           </div>
         )}
@@ -153,7 +247,7 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
               message.type === "user" ? "justify-end" : "justify-start",
             )}
           >
-            {(message.type === "ai" || message.type === "tool-execution") && (
+            {(message.type === "ai" || message.type === "tool-execution" || message.type === "tool-result") && (
               <Avatar className="h-6 w-6 bg-primary/10">
                 <Image src="/logo.svg" alt="logo" width={24} height={24} />
               </Avatar>
@@ -166,18 +260,25 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
                   message.type === "user"
                     ? "bg-primary text-primary-foreground rounded-tr-none"
                     : message.type === "tool-execution"
-                      ? "bg-muted/50 text-foreground rounded-tl-none"
-                      : "bg-muted text-foreground rounded-tl-none",
+                      ? "bg-muted/30 text-muted-foreground rounded-tl-none italic"
+                      : message.type === "tool-result"
+                        ? "bg-muted/50 text-foreground rounded-tl-none font-mono text-xs leading-relaxed"
+                        : "bg-muted text-foreground rounded-tl-none",
                 )}
               >
-                {message.content}
+                {renderMessageContent(message)}
               </div>
               <span className="text-[10px] text-muted-foreground px-2">{formatTime(message.timestamp)}</span>
             </div>
 
             {message.type === "user" && (
               <Avatar className="h-6 w-6 bg-primary">
-                <Image src={session?.user?.image as string} alt={session?.user?.name.split(" ")[0] as string} width={24} height={24} />
+                <Image
+                  src={session?.user?.image || "/default-avatar.png"}
+                  alt={session?.user?.name?.split(" ")[0] || "User"}
+                  width={24}
+                  height={24}
+                />
               </Avatar>
             )}
           </div>
@@ -205,7 +306,7 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
             <CommandInput
               ref={inputRef}
               autoFocus
-              placeholder="Type a message..."
+              placeholder="Ask about weather, calendar, or anything else..."
               value={currentMessage}
               onValueChange={setCurrentMessage}
               onKeyDown={handleKeyDown}
