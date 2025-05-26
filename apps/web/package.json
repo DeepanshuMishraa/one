@@ -54,6 +54,7 @@
     "dotenv": "^16.5.0",
     "drizzle-orm": "^0.43.1",
     "framer-motion": "^12.11.4",
+    "fs": "^0.0.1-security",
     "googleapis": "^148.0.0",
     "lucide-react": "^0.510.0",
     "mem0ai": "^2.1.26",

@@ -93,4 +93,36 @@ export interface CalendarEventResponse {
   updated?: string;
 }
 
+export interface Message {
+  type: "user" | "ai" | "tool-execution" | "tool-result"
+  content: string
+  timestamp: Date
+  toolData?: any
+}
+
+export interface ChatCommandProps {
+  onBack: () => void
+}
+
+export interface ToolCall {
+  toolCallId: string
+  toolName: string
+  args: any
+}
+
+export interface ToolResult {
+  toolCallId: string
+  toolName: string
+  result: any
+}
+
+export interface APIResponse {
+  content: string
+  toolCalls: ToolCall[]
+  toolResults: ToolResult[]
+  hasToolCalls: boolean
+  finishReason: string
+  error?: string
+}
+
 export type EventColor = "blue" | "orange" | "violet" | "rose" | "emerald";
