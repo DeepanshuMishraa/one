@@ -109,6 +109,34 @@ export async function POST(req: Request) {
 
     console.log("Messages being sent to LLM:", messages)
 
+    // Set a timeout for memory operations
+    const MEMORY_TIMEOUT = 10000; // 10 seconds timeout
+
+    // Store the conversation in memory with timeout
+    const storeMemory = async () => {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), MEMORY_TIMEOUT);
+
+      try {
+        await Promise.race([
+          client.add(messages as Message[], {
+            user_id: session.user.id
+          }),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Memory operation timed out')), MEMORY_TIMEOUT)
+          )
+        ]);
+      } catch (error) {
+        console.error('Memory storage failed:', error);
+        // Continue execution - memory storage is non-critical
+      } finally {
+        clearTimeout(timeoutId);
+      }
+    };
+
+    // Execute memory storage in parallel with response generation
+    const memoryPromise = storeMemory();
+
     const response = await generateText({
       model: groq("qwen-qwq-32b"),
       messages: messages,
@@ -125,7 +153,7 @@ export async function POST(req: Request) {
               const weatherResponse = await axios.get(
                 `http://api.weatherapi.com/v1/current.json?key=${process.env.WEATHER_API_KEY}&q=${location}&aqi=no`,
               )
-              
+
               const data = weatherResponse.data
               return {
                 location: data.location.name,
@@ -280,8 +308,12 @@ export async function POST(req: Request) {
       },
     })
 
-    // Store the conversation in memory
-    await client.add(messages as Message[], { user_id: session.user.id })
+    // Wait for memory storage but don't let it block the response
+    try {
+      await memoryPromise;
+    } catch (error) {
+      console.error('Failed to store in memory:', error);
+    }
 
     // Prepare the response with tool execution results
     const responseData = {
