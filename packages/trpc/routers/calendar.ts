@@ -9,7 +9,6 @@ import {
 } from "@repo/types";
 import { GetUserSession, getCalendarClient } from "../utils/google-auth";
 
-// Map Google Calendar colors to our EventColor type
 const colorMap: { [key: string]: EventColor } = {
   "1": "blue",    // Lavender
   "2": "emerald", // Sage
