@@ -8,7 +8,35 @@ function isSameDay(date1: Date, date2: Date) {
   );
 }
 
-// Fixed tool definition with required field and better description
+// Helper function to parse natural language dates
+function parseDate(dateString: string): Date | null {
+  try {
+    // Handle common formats
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      return date;
+    }
+
+    // Handle "today", "tomorrow", etc. if needed
+    const today = new Date();
+    const lowerCase = dateString.toLowerCase();
+
+    if (lowerCase === 'today') {
+      return today;
+    }
+
+    if (lowerCase === 'tomorrow') {
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return tomorrow;
+    }
+
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 export const getCalendarEventsToolDefination = {
   name: "get_calendar_events",
   description: "Get events from the user's calendar for a specific date range. If no dates are provided, returns all events. Use ISO date format (YYYY-MM-DD) for dates.",
@@ -24,7 +52,7 @@ export const getCalendarEventsToolDefination = {
         description: "End date for filtering events in ISO string format (YYYY-MM-DD). Optional - if not provided, will not filter by end date."
       }
     },
-    required: [] 
+    required: []
   }
 }
 
@@ -47,7 +75,7 @@ export const CalendarEventsTool = async ({
 
     if (!data?.events?.length) {
       return JSON.stringify({
-        message: "No events found",
+        message: "No events found in your calendar",
         events: []
       });
     }
@@ -57,12 +85,8 @@ export const CalendarEventsTool = async ({
     let endDate: Date | null = null;
 
     if (toolArgs.startDate) {
-      try {
-        startDate = new Date(toolArgs.startDate);
-        if (isNaN(startDate.getTime())) {
-          throw new Error("Invalid start date");
-        }
-      } catch (error) {
+      startDate = parseDate(toolArgs.startDate);
+      if (!startDate) {
         console.error("Invalid startDate:", toolArgs.startDate);
         return JSON.stringify({
           error: "Invalid date format",
@@ -72,12 +96,8 @@ export const CalendarEventsTool = async ({
     }
 
     if (toolArgs.endDate) {
-      try {
-        endDate = new Date(toolArgs.endDate);
-        if (isNaN(endDate.getTime())) {
-          throw new Error("Invalid end date");
-        }
-      } catch (error) {
+      endDate = parseDate(toolArgs.endDate);
+      if (!endDate) {
         console.error("Invalid endDate:", toolArgs.endDate);
         return JSON.stringify({
           error: "Invalid date format",
@@ -92,20 +112,24 @@ export const CalendarEventsTool = async ({
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
 
+      // Single day query
       if (startDate && (!endDate || isSameDay(startDate, endDate))) {
         return isSameDay(eventStart, startDate) ||
           (eventStart <= startDate && eventEnd >= startDate);
       }
 
+      // Date range query
       if (startDate && endDate) {
         return (eventStart >= startDate && eventStart <= endDate) ||
           (eventStart <= startDate && eventEnd >= startDate);
       }
 
+      // Only start date
       if (startDate) {
         return eventStart >= startDate;
       }
 
+      // Only end date
       if (endDate) {
         return isSameDay(eventEnd, endDate) || eventEnd <= endDate;
       }
@@ -117,24 +141,30 @@ export const CalendarEventsTool = async ({
       title: event.title,
       start: event.start.toISOString(),
       end: event.end.toISOString(),
-      description: event.description || "No Description for this event",
-      location: event.location || "No Location for this event",
+      description: event.description || "No description",
+      location: event.location || "No location specified",
       attendees: event.attendees?.map((attendee) => ({
         name: attendee.displayName || attendee.email,
         email: attendee.email,
-      })),
+      })) || [],
       color: event.color || "blue"
     }));
 
+    const dateRangeText = startDate ?
+      (endDate && !isSameDay(startDate, endDate) ?
+        ` from ${startDate.toLocaleDateString()} to ${endDate.toLocaleDateString()}` :
+        ` on ${startDate.toLocaleDateString()}`) :
+      "";
+
     if (relevantInfo.length === 0) {
       return JSON.stringify({
-        message: `No events found${startDate ? ` for ${startDate.toLocaleDateString()}` : ""}${endDate && !isSameDay(startDate!, endDate) ? ` to ${endDate.toLocaleDateString()}` : ""}`,
+        message: `No events found${dateRangeText}`,
         events: []
       }, null, 2);
     }
 
     return JSON.stringify({
-      message: `Found ${relevantInfo.length} event${relevantInfo.length === 1 ? "" : "s"}${startDate ? ` for ${startDate.toLocaleDateString()}` : ""}${endDate && !isSameDay(startDate!, endDate) ? ` to ${endDate.toLocaleDateString()}` : ""}`,
+      message: `Found ${relevantInfo.length} event${relevantInfo.length === 1 ? "" : "s"}${dateRangeText}`,
       events: relevantInfo
     }, null, 2);
 
