@@ -65,7 +65,7 @@ export default function Hero() {
     <>
       <StarsBackground className="flex flex-col min-h-[100vh]">
         <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center justify-center space-y-4 px-4 py-10 mt-16 sm:mt-20 sm:space-y-5 sm:px-6 sm:py-16 md:space-y-6">
-  
+
           <div className="absolute inset-0 z-auto">
             <div className="absolute inset-0 bg-gradient-to-b from-orange-500/30 via-purple-500/20 to-transparent blur-3xl opacity-30 animate-pulse" />
             <div className="absolute inset-0 bg-gradient-to-tl from-blue-500 via-cyan-400/20 to-transparent blur-3xl opacity-30 animate-pulse [animation-delay:1s]" />
@@ -109,7 +109,6 @@ export default function Hero() {
               users have already signed up
             </p>
           </div>
-
           <div className="w-full py-4 sm:py-6 lg:py-8">
             <Mockup
               src="/Hero.png"
@@ -120,8 +119,6 @@ export default function Hero() {
             />
           </div>
         </div>
-
-        {/* Footer Section */}
         <div className="w-full mt-auto border-t border-gray-800 relative z-10">
           <div className="container mx-auto px-4 py-6 flex flex-col lg:flex-row items-center justify-between text-sm text-gray-400">
             <div className="mb-4 lg:mb-0">© 2025 One. All rights reserved.</div>
