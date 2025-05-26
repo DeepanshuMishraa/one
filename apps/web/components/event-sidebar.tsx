@@ -1,9 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { RiCalendarLine, RiDeleteBinLine } from "@remixicon/react"
 import { format, isBefore } from "date-fns"
-import { X } from "lucide-react"
+import { X, Clock, CalendarIcon, FileText, MapPin, Trash2 } from "lucide-react"
 
 import type { CalendarEvent, EventColor } from "@/components/event-calendar"
 import { cn } from "@/lib/utils"
@@ -11,7 +10,6 @@ import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -120,7 +118,7 @@ export function EventSidebar({ event, isOpen, onClose, onSave, onDelete }: Event
       return
     }
 
-    const eventTitle = title.trim() ? title : "(no title)"
+    const eventTitle = title.trim() ? title : "Untitled Event"
 
     onSave({
       id: event?.id || "",
@@ -143,40 +141,50 @@ export function EventSidebar({ event, isOpen, onClose, onSave, onDelete }: Event
   const colorOptions: Array<{
     value: EventColor
     label: string
-    bgClass: string
-    borderClass: string
+    className: string
+    preview: string
   }> = [
       {
         value: "blue",
         label: "Blue",
-        bgClass: "bg-blue-400 data-[state=checked]:bg-blue-400",
-        borderClass: "border-blue-400 data-[state=checked]:border-blue-400",
+        className: "bg-gradient-to-r from-blue-500 to-blue-600",
+        preview: "Perfect for work meetings and professional events",
       },
       {
         value: "violet",
         label: "Violet",
-        bgClass: "bg-violet-400 data-[state=checked]:bg-violet-400",
-        borderClass: "border-violet-400 data-[state=checked]:border-violet-400",
-      },
-      {
-        value: "rose",
-        label: "Rose",
-        bgClass: "bg-rose-400 data-[state=checked]:bg-rose-400",
-        borderClass: "border-rose-400 data-[state=checked]:border-rose-400",
+        className: "bg-gradient-to-r from-violet-500 to-purple-600",
+        preview: "Great for creative projects and brainstorming",
       },
       {
         value: "emerald",
         label: "Emerald",
-        bgClass: "bg-emerald-400 data-[state=checked]:bg-emerald-400",
-        borderClass: "border-emerald-400 data-[state=checked]:border-emerald-400",
+        className: "bg-gradient-to-r from-emerald-500 to-green-600",
+        preview: "Ideal for health, fitness, and nature activities",
+      },
+      {
+        value: "rose",
+        label: "Rose",
+        className: "bg-gradient-to-r from-rose-500 to-pink-600",
+        preview: "Perfect for personal events and celebrations",
       },
       {
         value: "orange",
         label: "Orange",
-        bgClass: "bg-orange-400 data-[state=checked]:bg-orange-400",
-        borderClass: "border-orange-400 data-[state=checked]:border-orange-400",
+        className: "bg-gradient-to-r from-orange-500 to-amber-600",
+        preview: "Great for social events and networking",
       },
     ]
+
+  const formatDisplayTime = (time: string) => {
+    const [hours, minutes] = time.split(":").map(Number)
+    const date = new Date(2000, 0, 1, hours, minutes)
+    return format(date, "h:mm a")
+  }
+
+  const formatDisplayDate = (date: Date) => {
+    return format(date, "EEE d MMM")
+  }
 
   return (
     <>
@@ -192,120 +200,107 @@ export function EventSidebar({ event, isOpen, onClose, onSave, onDelete }: Event
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed top-0 right-0 z-50 h-full w-96 bg-background border-l shadow-xl transition-transform duration-300 ease-out",
+          "fixed top-0 right-0 z-50 h-full w-80 bg-background border-l shadow-xl transition-transform duration-300 ease-out",
           isOpen ? "translate-x-0" : "translate-x-full",
         )}
       >
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b">
-            <h2 className="text-lg font-semibold">{event?.id ? "Edit Event" : "Create Event"}</h2>
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
+          <div className="flex items-center justify-between p-6 pb-4">
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Event title"
+              className="text-lg font-medium border-none shadow-none p-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground"
+            />
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6 ml-4 flex-shrink-0">
               <X className="h-4 w-4" />
-              <span className="sr-only">Close</span>
             </Button>
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto p-6">
-            {error && (
-              <div className="bg-destructive/15 text-destructive rounded-md px-3 py-2 text-sm mb-4">{error}</div>
-            )}
+          <div className="flex-1 overflow-y-auto px-6 space-y-6">
+            {error && <div className="bg-destructive/10 text-destructive rounded-lg px-3 py-2 text-sm">{error}</div>}
 
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <Label htmlFor="title">Title</Label>
-                <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Event title" />
+            {/* Time Section */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3">
+                <Clock className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-sm">
+                  {!allDay ? (
+                    <>
+                      <Select value={startTime} onValueChange={setStartTime}>
+                        <SelectTrigger className="border-none shadow-none p-0 h-auto w-auto font-medium">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <span className="">→</span>
+                      <Select value={endTime} onValueChange={setEndTime}>
+                        <SelectTrigger className="border-none shadow-none p-0 h-auto w-auto font-medium">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {timeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </>
+                  ) : (
+                    <span className="font-medium">All day</span>
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  rows={3}
-                  placeholder="Add a description..."
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="start-date">Start Date</Label>
+              <div className="flex items-center gap-3">
+                <CalendarIcon className="h-4 w-4" />
+                <div className="flex items-center gap-2 text-sm">
                   <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
                     <PopoverTrigger asChild>
-                      <Button
-                        id="start-date"
-                        variant="outline"
-                        className={cn("w-full justify-between px-3 font-normal", !startDate && "text-muted-foreground")}
-                      >
-                        <span className="truncate">{startDate ? format(startDate, "MMM d") : "Pick date"}</span>
-                        <RiCalendarLine size={16} className="shrink-0" />
+                      <Button variant="ghost" className="p-0 h-auto font-medium text-sm hover:bg-transparent">
+                        {formatDisplayDate(startDate)}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-2" align="start">
                       <Calendar
                         mode="single"
                         selected={startDate}
-                        defaultMonth={startDate}
                         onSelect={(date) => {
                           if (date) {
                             setStartDate(date)
                             if (isBefore(endDate, date)) {
                               setEndDate(date)
                             }
-                            setError(null)
                             setStartDateOpen(false)
                           }
                         }}
                       />
                     </PopoverContent>
                   </Popover>
-                </div>
-
-                {!allDay && (
-                  <div className="space-y-2">
-                    <Label htmlFor="start-time">Start Time</Label>
-                    <Select value={startTime} onValueChange={setStartTime}>
-                      <SelectTrigger id="start-time">
-                        <SelectValue placeholder="Time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="end-date">End Date</Label>
+                  <span className="">→</span>
                   <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
                     <PopoverTrigger asChild>
-                      <Button
-                        id="end-date"
-                        variant="outline"
-                        className={cn("w-full justify-between px-3 font-normal", !endDate && "text-muted-foreground")}
-                      >
-                        <span className="truncate">{endDate ? format(endDate, "MMM d") : "Pick date"}</span>
-                        <RiCalendarLine size={16} className="shrink-0" />
+                      <Button variant="ghost" className="p-0 h-auto font-medium text-sm hover:bg-transparent">
+                        {formatDisplayDate(endDate)}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-2" align="start">
                       <Calendar
                         mode="single"
                         selected={endDate}
-                        defaultMonth={endDate}
                         disabled={{ before: startDate }}
                         onSelect={(date) => {
                           if (date) {
                             setEndDate(date)
-                            setError(null)
                             setEndDateOpen(false)
                           }
                         }}
@@ -313,57 +308,70 @@ export function EventSidebar({ event, isOpen, onClose, onSave, onDelete }: Event
                     </PopoverContent>
                   </Popover>
                 </div>
+              </div>
 
-                {!allDay && (
-                  <div className="space-y-2">
-                    <Label htmlFor="end-time">End Time</Label>
-                    <Select value={endTime} onValueChange={setEndTime}>
-                      <SelectTrigger id="end-time">
-                        <SelectValue placeholder="Time" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {timeOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+              <div className="flex items-center gap-3">
+                <div className="h-4 w-4" />
+                <label className="flex items-center gap-2 text-sm cursor-pointer">
+                  <Checkbox
+                    checked={allDay}
+                    onCheckedChange={(checked) => setAllDay(checked === true)}
+                    className="h-4 w-4"
+                  />
+                  <span className="">All day</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="flex gap-3">
+              <FileText className="h-4 w-4  mt-1" />
+              <Textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Note"
+                className="border-none shadow-none p-0 resize-none focus-visible:ring-0 placeholder:text-gray-400"
+                rows={3}
+              />
+            </div>
+
+            {/* Location */}
+            <div className="flex gap-3">
+              <MapPin className="h-4 w-4 mt-1" />
+              <Input
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder="Location"
+                className="border-none shadow-none p-0 h-auto focus-visible:ring-0 placeholder:text-gray-400"
+              />
+            </div>
+
+            {/* Color Selection */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <div className="h-4 w-4" />
+                <span className="text-sm font-medium">Event Color</span>
+              </div>
+              <RadioGroup className="space-y-2" value={color} onValueChange={(value: EventColor) => setColor(value)}>
+                {colorOptions.map((colorOption) => (
+                  <div key={colorOption.value} className="flex items-center gap-3">
+                    <RadioGroupItem value={colorOption.value} className="sr-only" id={`color-${colorOption.value}`} />
+                    <label
+                      htmlFor={`color-${colorOption.value}`}
+                      className={cn(
+                        "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-muted",
+                        color === colorOption.value && "bg-muted ring-2 ring-muted-foreground",
+                      )}
+                    >
+                      <div className={cn("w-4 h-4 rounded-full", colorOption.className)} />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">{colorOption.label}</div>
+                        <div className="text-xs text-muted-foreground">{colorOption.preview}</div>
+                      </div>
+                    </label>
                   </div>
-                )}
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Checkbox id="all-day" checked={allDay} onCheckedChange={(checked) => setAllDay(checked === true)} />
-                <Label htmlFor="all-day" className="text-sm font-medium">
-                  All day
-                </Label>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
-                <Input
-                  id="location"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  placeholder="Add location"
-                />
-              </div>
-
-              <div className="space-y-3">
-                <Label className="text-sm font-medium">Color</Label>
-                <RadioGroup className="flex gap-2" value={color} onValueChange={(value: EventColor) => setColor(value)}>
-                  {colorOptions.map((colorOption) => (
-                    <RadioGroupItem
-                      key={colorOption.value}
-                      id={`color-${colorOption.value}`}
-                      value={colorOption.value}
-                      aria-label={colorOption.label}
-                      className={cn("size-6 shadow-none", colorOption.bgClass, colorOption.borderClass)}
-                    />
-                  ))}
-                </RadioGroup>
-              </div>
+                ))}
+              </RadioGroup>
             </div>
           </div>
 
@@ -372,20 +380,21 @@ export function EventSidebar({ event, isOpen, onClose, onSave, onDelete }: Event
             <div className="flex items-center justify-between">
               {event?.id && (
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
                   onClick={handleDelete}
-                  className="text-destructive hover:text-destructive"
+                  className="text-muted-foreground hover:text-destructive h-8 w-8"
                 >
-                  <RiDeleteBinLine size={16} />
-                  <span className="sr-only">Delete event</span>
+                  <Trash2 className="h-4 w-4" />
                 </Button>
               )}
-              <div className="flex gap-3 ml-auto">
-                <Button variant="outline" onClick={onClose}>
+              <div className="flex gap-4 ml-auto">
+                  <Button variant="ghost" onClick={onClose} className="text-muted-foreground hover:bg-transparent">
                   Cancel
                 </Button>
-                <Button onClick={handleSave}>Save</Button>
+                  <Button onClick={handleSave}>
+                  Save
+                </Button>
               </div>
             </div>
           </div>

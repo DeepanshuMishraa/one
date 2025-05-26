@@ -1,41 +1,34 @@
-"use client";
+"use client"
 
-import { useMemo } from "react";
-import type { DraggableAttributes } from "@dnd-kit/core";
-import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
-import { differenceInMinutes, format, getMinutes, isPast } from "date-fns";
+import type React from "react"
 
-import {
-  getBorderRadiusClasses,
-  getEventColorClasses,
-  type CalendarEvent,
-} from "@/components/event-calendar";
-import { cn } from "@/lib/utils";
+import { useMemo } from "react"
+import type { DraggableAttributes } from "@dnd-kit/core"
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities"
+import { differenceInMinutes, format, getMinutes, isPast } from "date-fns"
 
-// Using date-fns format with custom formatting:
-// 'h' - hours (1-12)
-// 'a' - am/pm
-// ':mm' - minutes with leading zero (only if the token 'mm' is present)
+import { getBorderRadiusClasses, getEventColorClasses, type CalendarEvent } from "@/components/event-calendar"
+import { cn } from "@/lib/utils"
+
 const formatTimeWithOptionalMinutes = (date: Date) => {
-  return format(date, getMinutes(date) === 0 ? "ha" : "h:mma").toLowerCase();
-};
-
-interface EventWrapperProps {
-  event: CalendarEvent;
-  isFirstDay?: boolean;
-  isLastDay?: boolean;
-  isDragging?: boolean;
-  onClick?: (e: React.MouseEvent) => void;
-  className?: string;
-  children: React.ReactNode;
-  currentTime?: Date;
-  dndListeners?: SyntheticListenerMap;
-  dndAttributes?: DraggableAttributes;
-  onMouseDown?: (e: React.MouseEvent) => void;
-  onTouchStart?: (e: React.TouchEvent) => void;
+  return format(date, getMinutes(date) === 0 ? "ha" : "h:mma").toLowerCase()
 }
 
-// Shared wrapper component for event styling
+interface EventWrapperProps {
+  event: CalendarEvent
+  isFirstDay?: boolean
+  isLastDay?: boolean
+  isDragging?: boolean
+  onClick?: (e: React.MouseEvent) => void
+  className?: string
+  children: React.ReactNode
+  currentTime?: Date
+  dndListeners?: SyntheticListenerMap
+  dndAttributes?: DraggableAttributes
+  onMouseDown?: (e: React.MouseEvent) => void
+  onTouchStart?: (e: React.TouchEvent) => void
+}
+
 function EventWrapper({
   event,
   isFirstDay = true,
@@ -50,22 +43,26 @@ function EventWrapper({
   onMouseDown,
   onTouchStart,
 }: EventWrapperProps) {
-  // Always use the currentTime (if provided) to determine if the event is in the past
   const displayEnd = currentTime
-    ? new Date(
-        new Date(currentTime).getTime() +
-          (new Date(event.end).getTime() - new Date(event.start).getTime()),
-      )
-    : new Date(event.end);
+    ? new Date(new Date(currentTime).getTime() + (new Date(event.end).getTime() - new Date(event.start).getTime()))
+    : new Date(event.end)
 
-  const isEventInPast = isPast(displayEnd);
+  const isEventInPast = isPast(displayEnd)
+
+  // Check if this is a holiday event
+  const isHoliday =
+    event.title.toLowerCase().includes("holiday") ||
+    event.title.toLowerCase().includes("birthday") ||
+    event.title.toLowerCase().includes("purnima") ||
+    (event.title.toLowerCase().includes("day") && event.allDay)
 
   return (
     <button
       className={cn(
-        "focus-visible:border-ring focus-visible:ring-ring/50 flex h-full w-full overflow-hidden px-1 text-left font-medium backdrop-blur-md transition outline-none select-none focus-visible:ring-[3px] data-dragging:cursor-grabbing data-dragging:shadow-lg data-past-event:line-through sm:px-2",
-        getEventColorClasses(event.color),
+        "focus-visible:border-ring focus-visible:ring-ring/50 flex h-full w-full overflow-hidden px-2 py-1 text-left font-medium transition-all duration-200 outline-none select-none focus-visible:ring-2 data-dragging:cursor-grabbing data-dragging:scale-105 data-dragging:shadow-lg data-past-event:opacity-60 data-past-event:line-through",
+        getEventColorClasses(event.color, isHoliday),
         getBorderRadiusClasses(isFirstDay, isLastDay),
+        "hover:scale-[1.02] hover:z-10 relative",
         className,
       )}
       data-dragging={isDragging || undefined}
@@ -78,24 +75,24 @@ function EventWrapper({
     >
       {children}
     </button>
-  );
+  )
 }
 
 interface EventItemProps {
-  event: CalendarEvent;
-  view: "month" | "week" | "day" | "agenda";
-  isDragging?: boolean;
-  onClick?: (e: React.MouseEvent) => void;
-  showTime?: boolean;
-  currentTime?: Date; // For updating time during drag
-  isFirstDay?: boolean;
-  isLastDay?: boolean;
-  children?: React.ReactNode;
-  className?: string;
-  dndListeners?: SyntheticListenerMap;
-  dndAttributes?: DraggableAttributes;
-  onMouseDown?: (e: React.MouseEvent) => void;
-  onTouchStart?: (e: React.TouchEvent) => void;
+  event: CalendarEvent
+  view: "month" | "week" | "day" | "agenda"
+  isDragging?: boolean
+  onClick?: (e: React.MouseEvent) => void
+  showTime?: boolean
+  currentTime?: Date
+  isFirstDay?: boolean
+  isLastDay?: boolean
+  children?: React.ReactNode
+  className?: string
+  dndListeners?: SyntheticListenerMap
+  dndAttributes?: DraggableAttributes
+  onMouseDown?: (e: React.MouseEvent) => void
+  onTouchStart?: (e: React.TouchEvent) => void
 }
 
 export function EventItem({
@@ -114,38 +111,35 @@ export function EventItem({
   onMouseDown,
   onTouchStart,
 }: EventItemProps) {
-  const eventColor = event.color;
-
-  // Use the provided currentTime (for dragging) or the event's actual time
   const displayStart = useMemo(() => {
-    return currentTime || new Date(event.start);
-  }, [currentTime, event.start]);
+    return currentTime || new Date(event.start)
+  }, [currentTime, event.start])
 
   const displayEnd = useMemo(() => {
     return currentTime
-      ? new Date(
-          new Date(currentTime).getTime() +
-            (new Date(event.end).getTime() - new Date(event.start).getTime()),
-        )
-      : new Date(event.end);
-  }, [currentTime, event.start, event.end]);
+      ? new Date(new Date(currentTime).getTime() + (new Date(event.end).getTime() - new Date(event.start).getTime()))
+      : new Date(event.end)
+  }, [currentTime, event.start, event.end])
 
-  // Calculate event duration in minutes
   const durationMinutes = useMemo(() => {
-    return differenceInMinutes(displayEnd, displayStart);
-  }, [displayStart, displayEnd]);
+    return differenceInMinutes(displayEnd, displayStart)
+  }, [displayStart, displayEnd])
 
   const getEventTime = () => {
-    if (event.allDay) return "All day";
+    if (event.allDay) return "All day"
 
-    // For short events (less than 45 minutes), only show start time
     if (durationMinutes < 45) {
-      return formatTimeWithOptionalMinutes(displayStart);
+      return formatTimeWithOptionalMinutes(displayStart)
     }
 
-    // For longer events, show both start and end time
-    return `${formatTimeWithOptionalMinutes(displayStart)} - ${formatTimeWithOptionalMinutes(displayEnd)}`;
-  };
+    return `${formatTimeWithOptionalMinutes(displayStart)} - ${formatTimeWithOptionalMinutes(displayEnd)}`
+  }
+
+  const isHoliday =
+    event.title.toLowerCase().includes("holiday") ||
+    event.title.toLowerCase().includes("birthday") ||
+    event.title.toLowerCase().includes("purnima") ||
+    (event.title.toLowerCase().includes("day") && event.allDay)
 
   if (view === "month") {
     return (
@@ -155,10 +149,7 @@ export function EventItem({
         isLastDay={isLastDay}
         isDragging={isDragging}
         onClick={onClick}
-        className={cn(
-          "mt-[var(--event-gap)] h-[var(--event-height)] items-center text-[10px] sm:text-[13px]",
-          className,
-        )}
+        className={cn("mt-[var(--event-gap)] h-[var(--event-height)] items-center text-xs font-medium", className)}
         currentTime={currentTime}
         dndListeners={dndListeners}
         dndAttributes={dndAttributes}
@@ -166,17 +157,20 @@ export function EventItem({
         onTouchStart={onTouchStart}
       >
         {children || (
-          <span className="truncate">
-            {!event.allDay && (
-              <span className="truncate sm:text-xs font-normal opacity-70 uppercase">
-                {formatTimeWithOptionalMinutes(displayStart)}{" "}
-              </span>
-            )}
-            {event.title}
-          </span>
+          <div className="flex items-center gap-1 w-full min-w-0">
+            {isHoliday && <span className="text-xs">🎉</span>}
+            <span className="truncate flex-1">
+              {!event.allDay && (
+                <span className="text-xs font-normal opacity-80 mr-1">
+                  {formatTimeWithOptionalMinutes(displayStart)}
+                </span>
+              )}
+              {event.title}
+            </span>
+          </div>
         )}
       </EventWrapper>
-    );
+    )
   }
 
   if (view === "week" || view === "day") {
@@ -188,9 +182,9 @@ export function EventItem({
         isDragging={isDragging}
         onClick={onClick}
         className={cn(
-          "py-1",
-          durationMinutes < 45 ? "items-center" : "flex-col",
-          view === "week" ? "text-[10px] sm:text-[13px]" : "text-[13px]",
+          "py-1.5 px-2",
+          durationMinutes < 45 ? "items-center" : "flex-col justify-start",
+          view === "week" ? "text-xs" : "text-sm",
           className,
         )}
         currentTime={currentTime}
@@ -200,34 +194,33 @@ export function EventItem({
         onTouchStart={onTouchStart}
       >
         {durationMinutes < 45 ? (
-          <div className="truncate">
-            {event.title}{" "}
+          <div className="flex items-center gap-1 w-full min-w-0">
+            {isHoliday && <span className="text-xs">🎉</span>}
+            <span className="truncate flex-1 font-medium">{event.title}</span>
             {showTime && (
-              <span className="opacity-70">
-                {formatTimeWithOptionalMinutes(displayStart)}
-              </span>
+              <span className="text-xs opacity-75 font-normal">{formatTimeWithOptionalMinutes(displayStart)}</span>
             )}
           </div>
         ) : (
-          <>
-            <div className="truncate font-medium">{event.title}</div>
-            {showTime && (
-              <div className="truncate font-normal opacity-70 sm:text-xs uppercase">
-                {getEventTime()}
-              </div>
-            )}
-          </>
+          <div className="w-full space-y-0.5">
+            <div className="flex items-center gap-1">
+              {isHoliday && <span className="text-xs">🎉</span>}
+              <span className="truncate font-medium text-sm">{event.title}</span>
+            </div>
+            {showTime && <div className="text-xs opacity-75 font-normal">{getEventTime()}</div>}
+            {event.location && <div className="text-xs opacity-75 truncate">📍 {event.location}</div>}
+          </div>
         )}
       </EventWrapper>
-    );
+    )
   }
 
-  // Agenda view - kept separate since it's significantly different
+  // Agenda view
   return (
     <button
       className={cn(
-        "focus-visible:border-ring focus-visible:ring-ring/50 flex w-full flex-col gap-1 rounded p-2 text-left transition outline-none focus-visible:ring-[3px] data-past-event:line-through data-past-event:opacity-90",
-        getEventColorClasses(eventColor),
+        "focus-visible:border-ring focus-visible:ring-ring/50 flex w-full flex-col gap-2 rounded-lg p-3 text-left transition-all duration-200 outline-none focus-visible:ring-2 data-past-event:line-through data-past-event:opacity-75 hover:scale-[1.01] hover:shadow-md",
+        getEventColorClasses(event.color, isHoliday),
         className,
       )}
       data-past-event={isPast(new Date(event.end)) || undefined}
@@ -237,26 +230,28 @@ export function EventItem({
       {...dndListeners}
       {...dndAttributes}
     >
-      <div className="text-sm font-medium">{event.title}</div>
-      <div className="text-xs opacity-70">
-        {event.allDay ? (
-          <span>All day</span>
-        ) : (
-          <span className="uppercase">
-            {formatTimeWithOptionalMinutes(displayStart)} -{" "}
-            {formatTimeWithOptionalMinutes(displayEnd)}
-          </span>
-        )}
+      <div className="flex items-center gap-2">
+        {isHoliday && <span className="text-sm">🎉</span>}
+        <span className="font-medium text-sm">{event.title}</span>
+      </div>
+      <div className="text-xs opacity-80 space-y-1">
+        <div>
+          {event.allDay ? (
+            <span>All day</span>
+          ) : (
+            <span>
+              {formatTimeWithOptionalMinutes(displayStart)} - {formatTimeWithOptionalMinutes(displayEnd)}
+            </span>
+          )}
+        </div>
         {event.location && (
-          <>
-            <span className="px-1 opacity-35"> · </span>
-            <span>{event.location}</span>
-          </>
+          <div className="flex items-center gap-1">
+            <span>📍</span>
+            <span className="truncate">{event.location}</span>
+          </div>
         )}
       </div>
-      {event.description && (
-        <div className="my-1 text-xs opacity-90">{event.description}</div>
-      )}
+      {event.description && <div className="text-xs opacity-90 line-clamp-2">{event.description}</div>}
     </button>
-  );
+  )
 }
