@@ -10,6 +10,7 @@ import {
   type EventColor,
 } from "@/components/event-calendar";
 import { signIn } from "@repo/auth/client";
+import { TextShimmer } from "./motion-primitives/text-shimmer";
 
 
 export const etiquettes = [
@@ -202,7 +203,9 @@ export default function Component() {
   if (calendarLoading || eventsLoading) {
     return (
       <div className="flex items-center justify-center h-full">
-        <div className="text-lg">Loading calendar...</div>
+        <TextShimmer className='font-mono text-sm' duration={1}>
+          Loading calendar...
+        </TextShimmer>
       </div>
     );
   }
