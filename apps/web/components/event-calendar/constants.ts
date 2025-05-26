@@ -10,8 +10,8 @@ export const WeekCellsHeight = 72;
 export const AgendaDaysToShow = 30;
 
 // Start and end hours for the week and day views
-export const StartHour = 7; // Start at 7 AM
-export const EndHour = 20; // End at 8 PM
+export const StartHour = 0;  // Changed from 7 to 0 (12 AM)
+export const EndHour = 24;   // Changed from 20 to 24 (12 AM next day)
 
 // Default start and end times
 export const DefaultStartHour = 9; // 9 AM
