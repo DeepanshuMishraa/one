@@ -64,7 +64,13 @@ export default function Hero() {
   return (
     <>
       <StarsBackground className="flex flex-col min-h-[100vh]">
-        <div className="mx-auto flex w-full max-w-7xl flex-col items-center justify-center space-y-4 px-4 py-10 mt-16 sm:mt-20 sm:space-y-5 sm:px-6 sm:py-16 md:space-y-6">
+        <div className="relative mx-auto flex w-full max-w-7xl flex-col items-center justify-center space-y-4 px-4 py-10 mt-16 sm:mt-20 sm:space-y-5 sm:px-6 sm:py-16 md:space-y-6">
+  
+          <div className="absolute inset-0 z-auto">
+            <div className="absolute inset-0 bg-gradient-to-b from-orange-500/30 via-purple-500/20 to-transparent blur-3xl opacity-30 animate-pulse" />
+            <div className="absolute inset-0 bg-gradient-to-tl from-blue-500 via-cyan-400/20 to-transparent blur-3xl opacity-30 animate-pulse [animation-delay:1s]" />
+          </div>
+
           <h1 className="mt-4 text-center text-3xl font-bold sm:mt-6 sm:text-4xl md:text-5xl lg:text-6xl">
             Talk to your calendar
           </h1>
