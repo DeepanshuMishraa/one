@@ -68,9 +68,18 @@ BETTERAUTH_SECRET=
 BETTERAUTH_URL="http://localhost:3000"
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
+
 ```
 
-4. Run the development server
+4. Run the database migrations
+
+```bash
+cd packages/db
+bun db:generate
+bun db:push
+```
+
+5. Run the development server
 
 ```bash
 bun dev
