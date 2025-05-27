@@ -3,16 +3,28 @@ import { Mockup } from "./ui/mockup";
 import { StarsBackground } from "./ui/stars";
 import { Input } from "./ui/input";
 import { Counter } from "./Counter";
-import { useState } from "react";
 import { useToastManager } from "./ui/toast";
 import { ArrowRight } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { addWaitlistSchema } from "@repo/types";
+import type { z } from "zod";
+import { Form, FormControl, FormField, FormItem, FormMessage } from "./ui/form";
+
+type FormData = z.infer<typeof addWaitlistSchema>;
 
 export default function Hero() {
-  const [email, setEmail] = useState("");
   const toast = useToastManager();
   const queryClient = useQueryClient();
+
+  const form = useForm<FormData>({
+    resolver: zodResolver(addWaitlistSchema),
+    defaultValues: {
+      email: "",
+    },
+  });
 
   const { data: waitlistData } = useQuery({
     queryKey: ["waitlist"],
@@ -23,8 +35,8 @@ export default function Hero() {
   });
 
   const { mutate: addToWaitlist, isPending: isLoading } = useMutation({
-    mutationFn: async (email: string) => {
-      const res = await axios.post("/api/waitlist", { email });
+    mutationFn: async (data: FormData) => {
+      const res = await axios.post("/api/waitlist", data);
       return res.data;
     },
     onSuccess: (data) => {
@@ -32,7 +44,7 @@ export default function Hero() {
         title: "Email added to waitlist",
         description: "You will be notified when we launch",
       });
-      setEmail("");
+      form.reset();
       queryClient.setQueryData(["waitlist"], data);
     },
     onSettled: () => {
@@ -55,11 +67,9 @@ export default function Hero() {
     },
   });
 
-  const handleSubmit = async (e?: React.FormEvent<HTMLFormElement>) => {
-    if (e) e.preventDefault();
-    if (!email) return;
-    addToWaitlist(email);
-  };
+  function onSubmit(data: FormData) {
+    addToWaitlist(data);
+  }
 
   return (
     <>
@@ -81,21 +91,35 @@ export default function Hero() {
             <span className="hidden sm:inline"><br /> No more clicking around.</span>
           </p>
 
-          <div className="relative mt-2 w-full max-w-[85%] sm:mt-4 sm:max-w-md">
-            <Input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="What's your email?"
-              className="pr-10"
-            />
-            <button
-              onClick={() => handleSubmit()}
-              className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 transition-colors hover:text-white"
-              disabled={isLoading}
-            >
-              <ArrowRight size={20} />
-            </button>
-          </div>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="relative mt-2 w-full max-w-[85%] sm:mt-4 sm:max-w-md">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          placeholder="What's your email?"
+                          className="pr-10"
+                          {...field}
+                        />
+                        <button
+                          type="submit"
+                          className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 transition-colors hover:text-white"
+                          disabled={isLoading}
+                        >
+                          <ArrowRight size={20} />
+                        </button>
+                      </div>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
 
           <div className="mt-2 flex flex-col items-center gap-1 sm:mt-4 sm:flex-row sm:gap-2">
             <Counter
