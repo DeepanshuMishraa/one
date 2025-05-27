@@ -9,8 +9,17 @@ import {
 } from "@repo/types";
 import { GetUserSession, getCalendarClient } from "../utils/google-auth";
 
+// Available colors for random assignment
+const availableColors: EventColor[] = ["blue", "violet", "rose", "emerald", "orange"];
+
+// Function to get a random color
+function getRandomEventColor(): EventColor {
+  const randomIndex = Math.floor(Math.random() * availableColors.length);
+  return availableColors[randomIndex];
+}
+
 const colorMap: { [key: string]: EventColor } = {
-  "1": "blue",    // Lavender
+  "1": "violet",  // Lavender
   "2": "emerald", // Sage
   "3": "violet",  // Grape
   "4": "rose",    // Flamingo
@@ -172,10 +181,10 @@ export const calendarRouter = createTRPCRouter({
 
           const isHoliday = event.organizer?.email === holidayCalendarId;
           const color = event.colorId
-            ? colorMap[event.colorId] || "blue"
+            ? colorMap[event.colorId] || getRandomEventColor()  // Use random color if no mapping
             : isHoliday
               ? "rose"
-              : "blue";
+              : getRandomEventColor();  // Use random color as default
 
           const sourceCalendar = myCalendars.data.items?.find(cal =>
             cal.id === event.organizer?.email || cal.primary

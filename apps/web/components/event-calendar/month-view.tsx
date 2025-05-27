@@ -112,7 +112,7 @@ export function MonthView({
             className="grid grid-cols-7 [&:last-child>*]:border-b-0"
           >
             {week.map((day, dayIndex) => {
-              if (!day) return null; // Skip if day is undefined
+              if (!day) return null; 
 
               const dayEvents = getEventsForDay(events, day);
               const spanningEvents = getSpanningEventsForDay(events, day);

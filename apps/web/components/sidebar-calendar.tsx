@@ -10,18 +10,14 @@ interface SidebarCalendarProps {
 }
 
 export default function SidebarCalendar({ className }: SidebarCalendarProps) {
-  // Use the shared calendar context
-  const { currentDate, setCurrentDate } = useCalendarContext();
 
-  // Track the month to display in the calendar
+  const { currentDate, setCurrentDate } = useCalendarContext();
   const [calendarMonth, setCalendarMonth] = useState<Date>(currentDate);
 
-  // Update the calendar month whenever currentDate changes
   useEffect(() => {
     setCalendarMonth(currentDate);
   }, [currentDate]);
 
-  // Handle date selection
   const handleSelect = (date: Date | undefined) => {
     if (date) {
       setCurrentDate(date);

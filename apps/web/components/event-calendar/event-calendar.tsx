@@ -264,7 +264,7 @@ export function EventCalendar({
 
   const eventAttendees = useMemo(() => {
     if (!calendarState.selectedEvent?.id) return []
-    const event = memoizedEvents.find((e) => e.id === calendarState.selectedEvent.id)
+    const event = memoizedEvents.find((e) => e.id === calendarState?.selectedEvent?.id)
     return event?.attendees || []
   }, [calendarState.selectedEvent, memoizedEvents])
 

@@ -8,6 +8,7 @@ import { debounce } from 'lodash';
 
 import {
   EventCalendar,
+  EventItem,
   type CalendarEvent,
   type EventColor,
 } from "@/components/event-calendar";
@@ -250,8 +251,8 @@ const EventList = memo(({ events }: { events: CalendarEvent[] }) => {
     >
       {({ index, style }) => (
         <EventItem
-          key={events[index].id}
-          event={events[index]}
+          key={events[index]?.id}
+          event={events[index]!}
           style={style}
         />
       )}
