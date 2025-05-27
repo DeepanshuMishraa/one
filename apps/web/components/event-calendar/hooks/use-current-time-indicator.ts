@@ -16,14 +16,13 @@ export function useCurrentTimeIndicator(
       const now = new Date();
       const hours = now.getHours();
       const minutes = now.getMinutes();
-      const totalMinutes = (hours - StartHour) * 60 + minutes;
-      const dayStartMinutes = 0; // 12am
-      const dayEndMinutes = (EndHour - StartHour) * 60; // 12am next day
 
-      // Calculate position as percentage of day
-      const position =
-        ((totalMinutes - dayStartMinutes) / (dayEndMinutes - dayStartMinutes)) *
-        100;
+      // Calculate position relative to the visible time range
+      const totalMinutes = (hours - StartHour) * 60 + minutes;
+      const totalVisibleMinutes = (EndHour - StartHour) * 60;
+
+      // Calculate position as percentage
+      const position = Math.min(Math.max((totalMinutes / totalVisibleMinutes) * 100, 0), 100);
 
       // Check if current day is in view based on the calendar view
       let isCurrentTimeVisible = false;

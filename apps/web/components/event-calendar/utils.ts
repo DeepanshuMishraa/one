@@ -1,7 +1,9 @@
-import { isSameDay } from "date-fns";
+import { isSameDay, startOfDay as getStartOfDay, endOfDay as getEndOfDay } from "date-fns";
 
 import type { CalendarEvent, EventColor } from "@/components/event-calendar";
 
+// Add caching for expensive operations
+const eventCache = new Map<string, CalendarEvent[]>();
 
 export function getEventColorClasses(color?: EventColor, isHoliday?: boolean) {
   // Special styling for holidays
@@ -51,12 +53,29 @@ export function getEventsForDay(
   events: CalendarEvent[],
   day: Date,
 ): CalendarEvent[] {
-  return events
+  const cacheKey = `${day.toISOString()}_${events.length}`;
+
+  if (eventCache.has(cacheKey)) {
+    return eventCache.get(cacheKey)!;
+  }
+
+  const dayStart = getStartOfDay(day);
+  const dayEnd = getEndOfDay(day);
+
+  const filteredEvents = events
     .filter((event) => {
       const eventStart = new Date(event.start);
-      return isSameDay(day, eventStart);
+      return eventStart >= dayStart && eventStart < dayEnd;
     })
     .sort((a, b) => new Date(a.start).getTime() - new Date(b.start).getTime());
+
+  eventCache.set(cacheKey, filteredEvents);
+  return filteredEvents;
+}
+
+// Add cache invalidation
+export function invalidateEventCache() {
+  eventCache.clear();
 }
 
 /**

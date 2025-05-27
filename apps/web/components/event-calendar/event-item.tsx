@@ -56,15 +56,24 @@ function EventWrapper({
     event.title.toLowerCase().includes("purnima") ||
     (event.title.toLowerCase().includes("day") && event.allDay)
 
+  // Add special styling for holiday events
+  const holidayStyles = isHoliday ? {
+    height: 'var(--event-height)',
+    minHeight: 'var(--event-height)',
+    maxHeight: 'var(--event-height)',
+    overflow: 'hidden'
+  } : {}
+
   return (
     <button
       className={cn(
-        "focus-visible:border-ring focus-visible:ring-ring/50 flex h-full w-full overflow-hidden px-2 py-1 text-left font-medium transition-all duration-200 outline-none select-none focus-visible:ring-2 data-dragging:cursor-grabbing data-dragging:scale-105 data-dragging:shadow-lg data-past-event:opacity-60 data-past-event:line-through",
+        "focus-visible:border-ring focus-visible:ring-ring/50 flex w-full overflow-hidden px-2 py-1 text-left font-medium transition-all duration-200 outline-none select-none focus-visible:ring-2 data-dragging:cursor-grabbing data-dragging:scale-105 data-dragging:shadow-lg data-past-event:opacity-60 data-past-event:line-through",
         getEventColorClasses(event.color, isHoliday),
         getBorderRadiusClasses(isFirstDay, isLastDay),
         "hover:scale-[1.02] hover:z-10 relative",
         className,
       )}
+      style={holidayStyles}
       data-dragging={isDragging || undefined}
       data-past-event={isEventInPast || undefined}
       onClick={onClick}

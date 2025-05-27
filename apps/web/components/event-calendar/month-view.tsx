@@ -166,6 +166,25 @@ export function MonthView({
 
                         if (!visibleCount) return null;
 
+                        const isHoliday =
+                          event.title.toLowerCase().includes("holiday") ||
+                          event.title.toLowerCase().includes("birthday") ||
+                          event.title.toLowerCase().includes("purnima") ||
+                          (event.title.toLowerCase().includes("day") && event.allDay);
+
+                        if (isHoliday) {
+                          return (
+                            <EventItem
+                              key={event.id}
+                              event={event}
+                              view="month"
+                              onClick={(e) => handleEventClick(event, e)}
+                              isFirstDay={true}
+                              isLastDay={true}
+                            />
+                          );
+                        }
+
                         if (!isFirstDay) {
                           return (
                             <div

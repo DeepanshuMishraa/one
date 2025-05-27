@@ -1,8 +1,10 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo } from "react";
 import { trpc } from "@repo/trpc/client";
 import { create } from 'zustand';
+import { FixedSizeList as List } from 'react-window';
+import { debounce } from 'lodash';
 
 import {
   EventCalendar,
@@ -87,11 +89,12 @@ export default function Component() {
     }
   }, [calendarData?.calendars]);
 
-  const events = useMemo(() => {
+  // Memoize calendar data transformations
+  const transformedEvents = useMemo(() => {
     if (!eventsData?.events) return [];
 
-    return eventsData.events.map((event): CalendarEvent => {
-      return {
+    return eventsData.events.reduce((acc, event) => {
+      acc.push({
         id: event.id,
         title: event.title,
         description: event.description || "",
@@ -99,18 +102,25 @@ export default function Component() {
         end: new Date(event.end),
         color: event.calendar ? getEventColor(event.calendar.backgroundColor) : "blue",
         location: event.location || "",
-      };
-    });
+      });
+      return acc;
+    }, [] as CalendarEvent[]);
   }, [eventsData?.events]);
 
+  // Memoize filtered events with a Map for O(1) lookup
+  const activeCalendarMap = useMemo(() => {
+    return new Map(activeCalendars.map(cal => [cal.id, cal.isActive]));
+  }, [activeCalendars]);
+
   const filteredEvents = useMemo(() => {
-    return events.filter((event) => {
-      const eventCalendar = eventsData?.events.find(e => e.id === event.id)?.calendar;
+    if (!eventsData?.events) return [];
+
+    return transformedEvents.filter(event => {
+      const eventCalendar = eventsData.events.find(e => e.id === event.id)?.calendar;
       if (!eventCalendar) return true;
-      const isActive = activeCalendars.find(cal => cal.id === eventCalendar.id)?.isActive ?? true;
-      return isActive;
+      return activeCalendarMap.get(eventCalendar.id) ?? true;
     });
-  }, [events, activeCalendars, eventsData?.events]);
+  }, [transformedEvents, activeCalendarMap, eventsData?.events]);
 
   const utils = trpc.useContext();
   const createEventMutation = trpc.calendar.createCalendarEvent.useMutation({
@@ -181,6 +191,12 @@ export default function Component() {
     );
   };
 
+  // For calendar navigation
+  const debouncedSetCurrentDate = useMemo(
+    () => debounce((date: Date) => setCurrentDate(date), 150),
+    []
+  );
+
   if (error?.message?.includes("reconnect your Google account")) {
     return (
       <div className="flex flex-col items-center justify-center h-full gap-4 p-4">
@@ -222,3 +238,23 @@ export default function Component() {
     </div>
   );
 }
+
+// In the Agenda view for long lists of events
+const EventList = memo(({ events }: { events: CalendarEvent[] }) => {
+  return (
+    <List
+      height={400}
+      itemCount={events.length}
+      itemSize={35}
+      width="100%"
+    >
+      {({ index, style }) => (
+        <EventItem
+          key={events[index].id}
+          event={events[index]}
+          style={style}
+        />
+      )}
+    </List>
+  );
+});

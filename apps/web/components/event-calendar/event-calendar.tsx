@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useState, useCallback } from "react"
 import { useCalendarContext } from "./calendar-context"
 import {
   addDays,
@@ -65,15 +65,18 @@ export function EventCalendar({
   initialView = "month",
 }: EventCalendarProps) {
   const { currentDate, setCurrentDate } = useCalendarContext()
-  const [view, setView] = useState<CalendarView>(initialView)
-  const [isEventSidebarOpen, setIsEventSidebarOpen] = useState(false)
-  const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null)
+  const memoizedEvents = useMemo(() => events, [events])
+  const [calendarState, setCalendarState] = useState({
+    view: initialView,
+    isEventSidebarOpen: false,
+    selectedEvent: null as CalendarEvent | null
+  })
   const { open } = useSidebar()
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (
-        isEventSidebarOpen ||
+        calendarState.isEventSidebarOpen ||
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
         (e.target instanceof HTMLElement && e.target.isContentEditable)
@@ -83,16 +86,16 @@ export function EventCalendar({
 
       switch (e.key.toLowerCase()) {
         case "m":
-          setView("month")
+          setCalendarState(prev => ({ ...prev, view: "month" }))
           break
         case "w":
-          setView("week")
+          setCalendarState(prev => ({ ...prev, view: "week" }))
           break
         case "d":
-          setView("day")
+          setCalendarState(prev => ({ ...prev, view: "day" }))
           break
         case "a":
-          setView("agenda")
+          setCalendarState(prev => ({ ...prev, view: "agenda" }))
           break
       }
     }
@@ -102,28 +105,28 @@ export function EventCalendar({
     return () => {
       window.removeEventListener("keydown", handleKeyDown)
     }
-  }, [isEventSidebarOpen])
+  }, [calendarState.isEventSidebarOpen])
 
   const handlePrevious = () => {
-    if (view === "month") {
+    if (calendarState.view === "month") {
       setCurrentDate(subMonths(currentDate, 1))
-    } else if (view === "week") {
+    } else if (calendarState.view === "week") {
       setCurrentDate(subWeeks(currentDate, 1))
-    } else if (view === "day") {
+    } else if (calendarState.view === "day") {
       setCurrentDate(addDays(currentDate, -1))
-    } else if (view === "agenda") {
+    } else if (calendarState.view === "agenda") {
       setCurrentDate(addDays(currentDate, -AgendaDaysToShow))
     }
   }
 
   const handleNext = () => {
-    if (view === "month") {
+    if (calendarState.view === "month") {
       setCurrentDate(addMonths(currentDate, 1))
-    } else if (view === "week") {
+    } else if (calendarState.view === "week") {
       setCurrentDate(addWeeks(currentDate, 1))
-    } else if (view === "day") {
+    } else if (calendarState.view === "day") {
       setCurrentDate(addDays(currentDate, 1))
-    } else if (view === "agenda") {
+    } else if (calendarState.view === "agenda") {
       setCurrentDate(addDays(currentDate, AgendaDaysToShow))
     }
   }
@@ -132,37 +135,45 @@ export function EventCalendar({
     setCurrentDate(new Date())
   }
 
-  const handleEventSelect = (event: CalendarEvent) => {
-    console.log("Event selected:", event)
-    setSelectedEvent(event)
-    setIsEventSidebarOpen(true)
-  }
+  const handleEventSelect = useCallback((event: CalendarEvent) => {
+    setCalendarState(prev => ({
+      ...prev,
+      selectedEvent: event,
+      isEventSidebarOpen: true
+    }));
+  }, []);
 
-  const handleEventCreate = (startTime: Date) => {
-    console.log("Creating new event at:", startTime)
-
-    const minutes = startTime.getMinutes()
-    const remainder = minutes % 15
-    if (remainder !== 0) {
-      if (remainder < 7.5) {
-        startTime.setMinutes(minutes - remainder)
-      } else {
-        startTime.setMinutes(minutes + (15 - remainder))
-      }
-      startTime.setSeconds(0)
-      startTime.setMilliseconds(0)
-    }
-
+  const handleEventCreate = useCallback((startTime: Date) => {
+    const roundedStartTime = roundToNearestFifteen(startTime);
     const newEvent: CalendarEvent = {
       id: "",
       title: "",
-      start: startTime,
-      end: addHoursToDate(startTime, 1),
+      start: roundedStartTime,
+      end: addHoursToDate(roundedStartTime, 1),
       allDay: false,
+    };
+    setCalendarState(prev => ({
+      ...prev,
+      selectedEvent: newEvent,
+      isEventSidebarOpen: true
+    }));
+  }, []);
+
+  const roundToNearestFifteen = (date: Date): Date => {
+    const result = new Date(date);
+    const minutes = result.getMinutes();
+    const remainder = minutes % 15;
+
+    if (remainder !== 0) {
+      const roundedMinutes = remainder < 7.5 ?
+        minutes - remainder :
+        minutes + (15 - remainder);
+      result.setMinutes(roundedMinutes);
+      result.setSeconds(0);
+      result.setMilliseconds(0);
     }
-    setSelectedEvent(newEvent)
-    setIsEventSidebarOpen(true)
-  }
+    return result;
+  };
 
   const handleEventSave = (event: CalendarEvent) => {
     if (event.id) {
@@ -181,15 +192,21 @@ export function EventCalendar({
         position: "bottom-left",
       })
     }
-    setIsEventSidebarOpen(false)
-    setSelectedEvent(null)
+    setCalendarState(prev => ({
+      ...prev,
+      isEventSidebarOpen: false,
+      selectedEvent: null
+    }));
   }
 
   const handleEventDelete = (eventId: string) => {
-    const deletedEvent = events.find((e) => e.id === eventId)
+    const deletedEvent = memoizedEvents.find((e) => e.id === eventId)
     onEventDelete?.(eventId)
-    setIsEventSidebarOpen(false)
-    setSelectedEvent(null)
+    setCalendarState(prev => ({
+      ...prev,
+      isEventSidebarOpen: false,
+      selectedEvent: null
+    }));
 
     if (deletedEvent) {
       toast(`Event "${deletedEvent.title}" deleted`, {
@@ -209,9 +226,9 @@ export function EventCalendar({
   }
 
   const viewTitle = useMemo(() => {
-    if (view === "month") {
+    if (calendarState.view === "month") {
       return format(currentDate, "MMMM yyyy")
-    } else if (view === "week") {
+    } else if (calendarState.view === "week") {
       const start = startOfWeek(currentDate, { weekStartsOn: 0 })
       const end = endOfWeek(currentDate, { weekStartsOn: 0 })
       if (isSameMonth(start, end)) {
@@ -219,7 +236,7 @@ export function EventCalendar({
       } else {
         return `${format(start, "MMM")} - ${format(end, "MMM yyyy")}`
       }
-    } else if (view === "day") {
+    } else if (calendarState.view === "day") {
       return (
         <>
           <span className="min-sm:hidden" aria-hidden="true">
@@ -231,7 +248,7 @@ export function EventCalendar({
           <span className="max-md:hidden">{format(currentDate, "EEE MMMM d, yyyy")}</span>
         </>
       )
-    } else if (view === "agenda") {
+    } else if (calendarState.view === "agenda") {
       const start = currentDate
       const end = addDays(currentDate, AgendaDaysToShow - 1)
 
@@ -243,13 +260,13 @@ export function EventCalendar({
     } else {
       return format(currentDate, "MMMM yyyy")
     }
-  }, [currentDate, view])
+  }, [currentDate, calendarState.view])
 
   const eventAttendees = useMemo(() => {
-    if (!selectedEvent?.id) return []
-    const event = events.find((e) => e.id === selectedEvent.id)
+    if (!calendarState.selectedEvent?.id) return []
+    const event = memoizedEvents.find((e) => e.id === calendarState.selectedEvent.id)
     return event?.attendees || []
-  }, [selectedEvent, events])
+  }, [calendarState.selectedEvent, memoizedEvents])
 
   return (
     <div
@@ -303,8 +320,11 @@ export function EventCalendar({
                 variant="outline"
                 className="max-sm:h-8 max-sm:px-2.5!"
                 onClick={() => {
-                  setSelectedEvent(null)
-                  setIsEventSidebarOpen(true)
+                  setCalendarState(prev => ({
+                    ...prev,
+                    selectedEvent: null,
+                    isEventSidebarOpen: true
+                  }))
                 }}
               >
                 New Event
@@ -312,21 +332,21 @@ export function EventCalendar({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" className="gap-1.5 max-sm:h-8 max-sm:px-2! max-sm:gap-1">
-                    <span className="capitalize">{view}</span>
+                    <span className="capitalize">{calendarState.view}</span>
                     <ChevronDownIcon className="-me-1 opacity-60" size={16} aria-hidden="true" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-32">
-                  <DropdownMenuItem onClick={() => setView("month")}>
+                  <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "month" }))}>
                     Month <DropdownMenuShortcut>M</DropdownMenuShortcut>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setView("week")}>
+                  <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "week" }))}>
                     Week <DropdownMenuShortcut>W</DropdownMenuShortcut>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setView("day")}>
+                  <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "day" }))}>
                     Day <DropdownMenuShortcut>D</DropdownMenuShortcut>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setView("agenda")}>
+                  <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "agenda" }))}>
                     Agenda <DropdownMenuShortcut>A</DropdownMenuShortcut>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -337,41 +357,44 @@ export function EventCalendar({
         </div>
 
         <div className="flex flex-1 flex-col">
-          {view === "month" && (
+          {calendarState.view === "month" && (
             <MonthView
               currentDate={currentDate}
-              events={events}
+              events={memoizedEvents}
               onEventSelect={handleEventSelect}
               onEventCreate={handleEventCreate}
             />
           )}
-          {view === "week" && (
+          {calendarState.view === "week" && (
             <WeekView
               currentDate={currentDate}
-              events={events}
+              events={memoizedEvents}
               onEventSelect={handleEventSelect}
               onEventCreate={handleEventCreate}
             />
           )}
-          {view === "day" && (
+          {calendarState.view === "day" && (
             <DayView
               currentDate={currentDate}
-              events={events}
+              events={memoizedEvents}
               onEventSelect={handleEventSelect}
               onEventCreate={handleEventCreate}
             />
           )}
-          {view === "agenda" && (
-            <AgendaView currentDate={currentDate} events={events} onEventSelect={handleEventSelect} />
+          {calendarState.view === "agenda" && (
+            <AgendaView currentDate={currentDate} events={memoizedEvents} onEventSelect={handleEventSelect} />
           )}
         </div>
 
         <EventSidebar
-          event={selectedEvent}
-          isOpen={isEventSidebarOpen}
+          event={calendarState.selectedEvent}
+          isOpen={calendarState.isEventSidebarOpen}
           onClose={() => {
-            setIsEventSidebarOpen(false)
-            setSelectedEvent(null)
+            setCalendarState(prev => ({
+              ...prev,
+              isEventSidebarOpen: false,
+              selectedEvent: null
+            }))
           }}
           onSave={handleEventSave}
           onDelete={handleEventDelete}

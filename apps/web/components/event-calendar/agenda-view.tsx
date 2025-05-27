@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { RiCalendarEventLine } from "@remixicon/react";
 import { addDays, format, isToday } from "date-fns";
 
@@ -22,24 +22,35 @@ export function AgendaView({
   events,
   onEventSelect,
 }: AgendaViewProps) {
-  // Show events for the next days based on constant
+  // Memoize days array calculation
   const days = useMemo(() => {
-    console.log("Agenda view updating with date:", currentDate.toISOString());
     return Array.from({ length: AgendaDaysToShow }, (_, i) =>
       addDays(new Date(currentDate), i),
     );
   }, [currentDate]);
 
-  const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
-    e.stopPropagation();
-    console.log("Agenda view event clicked:", event);
-    onEventSelect(event);
-  };
+  // Memoize event grouping by day
+  const eventsByDay = useMemo(() => {
+    const groupedEvents = new Map<string, CalendarEvent[]>();
 
-  // Check if there are any days with events
-  const hasEvents = days.some(
-    (day) => getAgendaEventsForDay(events, day).length > 0,
-  );
+    days.forEach(day => {
+      const dayKey = format(day, 'yyyy-MM-dd');
+      const dayEvents = getAgendaEventsForDay(events, day);
+      if (dayEvents.length > 0) {
+        groupedEvents.set(dayKey, dayEvents);
+      }
+    });
+
+    return groupedEvents;
+  }, [days, events]);
+
+  // Memoize hasEvents calculation
+  const hasEvents = useMemo(() => eventsByDay.size > 0, [eventsByDay]);
+
+  const handleEventClick = useCallback((event: CalendarEvent, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEventSelect(event);
+  }, [onEventSelect]);
 
   return (
     <div className="border-border/70 border-t ps-4">
