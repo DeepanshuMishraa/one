@@ -7,7 +7,7 @@ import {
   deleteCalendarEventSchema,
   updateCalendarEventSchema,
 } from "@repo/types";
-import { GetUserSession, getCalendarClient } from "../utils/google-auth";
+import { GetUserSession, getCalendarClient } from"../utils/google-auth";
 
 // Available colors for random assignment
 const availableColors: EventColor[] = ["blue", "violet", "rose", "emerald", "orange"];

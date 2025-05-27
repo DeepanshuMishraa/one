@@ -135,7 +135,7 @@ export default function Hero() {
           </div>
           <div className="w-full py-4 sm:py-6 lg:py-8">
             <Mockup
-              src="/Hero.png"
+              src="/Hero2.png"
               alt="One-Hero"
               width={1203}
               height={753}
