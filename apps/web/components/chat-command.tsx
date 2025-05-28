@@ -11,8 +11,7 @@ import { Button } from "@/components/ui/button"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import Image from "next/image"
 import { useSession } from "@repo/auth/client"
-import { type ChatCommandProps, type Message, type APIResponse, type ToolResult } from "@repo/types"
-
+import type { ChatCommandProps, Message, APIResponse, ToolResult } from "@repo/types"
 
 export function ChatCommand({ onBack }: ChatCommandProps) {
   const [messages, setMessages] = React.useState<Message[]>([])
@@ -33,9 +32,7 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
     onSuccess: (response) => {
       console.log("Received response:", response)
 
-      // Handle tool execution
       if (response.hasToolCalls && response.toolCalls.length > 0) {
-        // Add tool execution message
         setMessages((prev) => [
           ...prev,
           {
@@ -45,7 +42,6 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
           },
         ])
 
-        // Process tool results
         if (response.toolResults && response.toolResults.length > 0) {
           response.toolResults.forEach((toolResult) => {
             const resultContent = formatToolResult(toolResult)
@@ -99,6 +95,12 @@ export function ChatCommand({ onBack }: ChatCommandProps) {
         return "Getting weather..."
       case "getCalendarEvents":
         return "Checking calendar..."
+      case "createEvents":
+        return "Creating event..."
+      case "createCalendarEvent":
+        return "Creating calendar event..."
+      case "parseEventRequest":
+        return "Understanding your event request..."
       default:
         return "Processing..."
     }
@@ -159,6 +161,96 @@ Wind ${weather.windSpeed} km/h`
       })
 
       return result
+    }
+
+    if (toolResult.toolName === "parseEventRequest") {
+      const parseData = toolResult.result
+
+      if (parseData.error) {
+        return `❌ ${parseData.message || parseData.error}`
+      }
+
+      let result = "📅 Event Details Extracted:\n\n"
+
+      const { extractedDetails, missingFields, hasAllRequired } = parseData
+
+      // Show what was extracted
+      if (extractedDetails.title) {
+        result += `✅ Title: ${extractedDetails.title}\n`
+      }
+      if (extractedDetails.startTime) {
+        const startDate = new Date(extractedDetails.startTime)
+        result += `✅ Start: ${startDate.toLocaleDateString()} at ${startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}\n`
+      }
+      if (extractedDetails.endTime) {
+        const endDate = new Date(extractedDetails.endTime)
+        result += `✅ End: ${endDate.toLocaleDateString()} at ${endDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}\n`
+      }
+      if (extractedDetails.location) {
+        result += `✅ Location: ${extractedDetails.location}\n`
+      }
+      if (extractedDetails.description) {
+        result += `✅ Description: ${extractedDetails.description}\n`
+      }
+
+      // Show what's missing
+      if (missingFields.length > 0) {
+        result += `\n❓ Missing Information:\n`
+        missingFields.forEach((field: string) => {
+          result += `• ${field}\n`
+        })
+      }
+
+      if (hasAllRequired) {
+        result += "\n✨ Ready to create event!"
+      }
+
+      return result
+    }
+
+    if (toolResult.toolName === "createCalendarEvent") {
+      const eventData = toolResult.result
+
+      if (eventData.error) {
+        return `❌ Failed to create event: ${eventData.message || eventData.error}`
+      }
+
+      if (eventData.success && eventData.event) {
+        const event = eventData.event
+        let result = `✅ Event Created Successfully!\n\n`
+
+        result += `📅 ${event.title}\n`
+
+        if (event.start) {
+          const startDate = new Date(event.start)
+          const endDate = new Date(event.end)
+          const startTime = startDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          const endTime = endDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+          const dateStr = startDate.toLocaleDateString([], {
+            weekday: "long",
+            month: "short",
+            day: "numeric",
+          })
+
+          result += `🕐 ${dateStr} • ${startTime} - ${endTime}\n`
+        }
+
+        if (event.location) {
+          result += `📍 ${event.location}\n`
+        }
+
+        if (event.description) {
+          result += `📝 ${event.description}\n`
+        }
+
+        if (event.htmlLink) {
+          result += `\n🔗 View in Google Calendar`
+        }
+
+        return result
+      }
+
+      return eventData.message || "Event created successfully!"
     }
 
     return null
@@ -234,7 +326,7 @@ Wind ${weather.windSpeed} km/h`
           <div className="flex items-center justify-center h-full">
             <div className="text-center text-muted-foreground">
               <p className="text-sm">Start a conversation</p>
-              <p className="text-xs mt-1">Ask me about the weather, your calendar, or anything else!</p>
+              <p className="text-xs mt-1">Ask me about the weather, your calendar, or create events!</p>
             </div>
           </div>
         )}
@@ -306,7 +398,7 @@ Wind ${weather.windSpeed} km/h`
             <CommandInput
               ref={inputRef}
               autoFocus
-              placeholder="Ask about weather, calendar, or anything else..."
+              placeholder="Ask about weather, calendar, or create events..."
               value={currentMessage}
               onValueChange={setCurrentMessage}
               onKeyDown={handleKeyDown}
