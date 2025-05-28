@@ -65,13 +65,18 @@ export function EventCalendar({
   initialView = "month",
 }: EventCalendarProps) {
   const { currentDate, setCurrentDate } = useCalendarContext()
-  const memoizedEvents = useMemo(() => events, [events])
-  const [calendarState, setCalendarState] = useState({
+  const [calendarState, setCalendarState] = useState<{
+    view: CalendarView;
+    selectedEvent: CalendarEvent | null;
+    isEventSidebarOpen: boolean;
+  }>({
     view: initialView,
+    selectedEvent: null,
     isEventSidebarOpen: false,
-    selectedEvent: null as CalendarEvent | null
   })
   const { open } = useSidebar()
+
+  const memoizedEvents = useMemo(() => events, [events])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -216,14 +221,10 @@ export function EventCalendar({
     }
   }
 
-  const handleEventUpdate = (updatedEvent: CalendarEvent) => {
-    onEventUpdate?.(updatedEvent)
-
-    toast(`Event "${updatedEvent.title}" moved`, {
-      description: format(new Date(updatedEvent.start), "MMM d, yyyy"),
-      position: "bottom-left",
-    })
-  }
+  // Handle event update from drag and drop
+  const handleEventDragUpdate = useCallback((updatedEvent: CalendarEvent) => {
+    onEventUpdate?.(updatedEvent);
+  }, [onEventUpdate]);
 
   const viewTitle = useMemo(() => {
     if (calendarState.view === "month") {
@@ -279,7 +280,7 @@ export function EventCalendar({
         } as React.CSSProperties
       }
     >
-      <CalendarDndProvider onEventUpdate={handleEventUpdate}>
+      <CalendarDndProvider onEventUpdate={handleEventDragUpdate}>
         <div className={cn("flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-5 sm:px-4", className)}>
           <div className="flex sm:flex-col max-sm:items-center justify-between gap-1.5">
             <div className="flex items-center gap-1.5">
