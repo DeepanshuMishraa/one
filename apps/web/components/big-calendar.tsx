@@ -4,7 +4,8 @@ import { useState, useMemo, memo } from "react";
 import { trpc } from "@repo/trpc/client";
 import { create } from 'zustand';
 import { FixedSizeList as List } from 'react-window';
-import { debounce } from 'lodash';
+import type { CSSProperties } from 'react';
+import { format } from "date-fns";
 
 import {
   EventCalendar,
@@ -14,6 +15,8 @@ import {
 } from "@/components/event-calendar";
 import { signIn } from "@repo/auth/client";
 import { TextShimmer } from "./motion-primitives/text-shimmer";
+import { Button } from "@/components/ui/button";
+import { useToastManager } from "./ui/toast";
 
 
 export const etiquettes = [
@@ -60,7 +63,6 @@ export const getEventColor = (backgroundColor: string): EventColor => {
     '#F6BF26': 'orange',  // Yellow/Orange
   };
 
-  // Default mappings for common Google Calendar colors
   const defaultColorMap: { [key: string]: EventColor } = {
     '#D47483': 'rose',
     '#92E1C0': 'emerald',
@@ -75,6 +77,7 @@ export const getEventColor = (backgroundColor: string): EventColor => {
 export default function Component() {
   const { data: calendarData, isLoading: calendarLoading } = trpc.calendar.getCalendars.useQuery();
   const [activeCalendars, setActiveCalendars] = useState<{ id: string; isActive: boolean }[]>([]);
+  const toast = useToastManager()
 
   const { data: eventsData, isLoading: eventsLoading, error } = trpc.calendar.getCalendarEvents.useQuery(undefined, {
     retry: false,
@@ -90,7 +93,6 @@ export default function Component() {
     }
   }, [calendarData?.calendars]);
 
-  // Memoize calendar data transformations
   const transformedEvents = useMemo(() => {
     if (!eventsData?.events) return [];
 
@@ -108,7 +110,6 @@ export default function Component() {
     }, [] as CalendarEvent[]);
   }, [eventsData?.events]);
 
-  // Memoize filtered events with a Map for O(1) lookup
   const activeCalendarMap = useMemo(() => {
     return new Map(activeCalendars.map(cal => [cal.id, cal.isActive]));
   }, [activeCalendars]);
@@ -154,6 +155,11 @@ export default function Component() {
   };
 
   const handleEventUpdate = async (updatedEvent: CalendarEvent) => {
+    const toastId = toast.add({
+      title: `Moving "${updatedEvent.title}"...`,
+      id: "move-event",
+      type: "loading",
+    });
     try {
       await updateEventMutation.mutateAsync({
         id: updatedEvent.id,
@@ -162,8 +168,20 @@ export default function Component() {
         start: updatedEvent.start.toISOString(),
         end: updatedEvent.end.toISOString(),
       });
+      toast.add({
+        title: `Event "${updatedEvent.title}" moved successfully`,
+        description: format(new Date(updatedEvent.start), "MMM d, yyyy"),
+        id: toastId,
+        type: "success",
+      });
     } catch (error) {
       console.error("Failed to update event:", error);
+      toast.add({
+        title: `Failed to move "${updatedEvent.title}"`,
+        description: "Please try again",
+        id: toastId,
+        type: "error",
+      })
     }
   };
 
@@ -192,27 +210,11 @@ export default function Component() {
     );
   };
 
-  // For calendar navigation
-  const debouncedSetCurrentDate = useMemo(
-    () => debounce((date: Date) => setCurrentDate(date), 150),
-    []
-  );
-
-  if (error?.message?.includes("reconnect your Google account")) {
+  if (error?.message.includes("Your Google account session has expired")) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4 p-4">
-        <div className="text-lg font-medium">
-          Please connect your Google Calendar to continue
-        </div>
-        <p className="text-sm max-w-md text-center">
-          We need access to your Google Calendar to show and manage your events. Click below to connect your account.
-        </p>
-        <button
-          onClick={handleReconnectGoogle}
-          className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-        >
-          Connect Google Calendar
-        </button>
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4">
+        <p className="text-muted-foreground text-center">Your Google account session has expired.</p>
+        <Button onClick={handleReconnectGoogle}>Reconnect Google Calendar</Button>
       </div>
     );
   }
@@ -228,34 +230,28 @@ export default function Component() {
   }
 
   return (
-    <div className="flex-1">
+    <div className="flex h-full flex-col">
       <EventCalendar
         events={filteredEvents}
         onEventAdd={handleEventAdd}
         onEventUpdate={handleEventUpdate}
         onEventDelete={handleEventDelete}
-        initialView="week"
+        initialView="day"
       />
     </div>
   );
 }
 
-// In the Agenda view for long lists of events
-const EventList = memo(({ events }: { events: CalendarEvent[] }) => {
+const EventRow = memo(({ event, style }: { event: CalendarEvent; style: CSSProperties }) => {
   return (
-    <List
-      height={400}
-      itemCount={events.length}
-      itemSize={35}
-      width="100%"
-    >
-      {({ index, style }) => (
-        <EventItem
-          key={events[index]?.id}
-          event={events[index]!}
-          style={style}
-        />
-      )}
-    </List>
+    <div style={style} className="px-4 py-2">
+      <div className="flex items-center gap-2">
+        <span className="font-medium">{event.title}</span>
+        <span className="text-sm text-muted-foreground">
+          {new Date(event.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+        </span>
+      </div>
+    </div>
   );
 });
+
