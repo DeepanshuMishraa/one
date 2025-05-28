@@ -58,9 +58,16 @@ export default function Hero() {
           description:
             "This email has already been registered for early access",
         });
+      } else if (error.response?.status === 403) {
+        toast.add({
+          title: "Invalid email",
+          type: "error",
+          description: error.response?.data?.message || "Please enter a valid email address",
+        });
       } else {
         toast.add({
           title: "Error adding email",
+          type: "error",
           description: "Something went wrong. Please try again.",
         });
       }
