@@ -67,10 +67,10 @@ function EventWrapper({
   return (
     <button
       className={cn(
-        "focus-visible:border-ring focus-visible:ring-ring/50 flex w-full overflow-hidden px-2 py-1 text-left font-medium transition-all duration-200 outline-none select-none focus-visible:ring-2 data-dragging:cursor-grabbing data-dragging:scale-105 data-dragging:shadow-lg data-past-event:opacity-60 data-past-event:line-through",
+        "focus-visible:border-ring focus-visible:ring-ring/50 flex w-full overflow-hidden px-1.5 sm:px-2 py-1 sm:py-1.5 text-left font-medium transition-all duration-200 outline-none select-none focus-visible:ring-2 data-dragging:cursor-grabbing data-dragging:scale-105 data-dragging:shadow-lg data-past-event:opacity-60 data-past-event:line-through",
         getEventColorClasses(event.color, isHoliday),
         getBorderRadiusClasses(isFirstDay, isLastDay),
-        "hover:scale-[1.02] hover:z-10 relative",
+        "hover:scale-[1.02] hover:z-10 relative touch-manipulation",
         className,
       )}
       style={holidayStyles}
@@ -158,7 +158,7 @@ export function EventItem({
         isLastDay={isLastDay}
         isDragging={isDragging}
         onClick={onClick}
-        className={cn("mt-[var(--event-gap)] h-[var(--event-height)] items-center text-xs font-medium", className)}
+        className={cn("mt-[var(--event-gap)] h-[var(--event-height)] items-center text-[10px] sm:text-xs font-medium", className)}
         currentTime={currentTime}
         dndListeners={dndListeners}
         dndAttributes={dndAttributes}
@@ -167,10 +167,10 @@ export function EventItem({
       >
         {children || (
           <div className="flex items-center gap-1 w-full min-w-0">
-            {isHoliday && <span className="text-xs">🎉</span>}
+            {isHoliday && <span className="text-[10px] sm:text-xs">🎉</span>}
             <span className="truncate flex-1">
               {!event.allDay && (
-                <span className="text-xs font-normal opacity-80 mr-1">
+                <span className="text-[9px] sm:text-xs font-normal opacity-80 mr-1">
                   {formatTimeWithOptionalMinutes(displayStart)}
                 </span>
               )}
@@ -191,9 +191,9 @@ export function EventItem({
         isDragging={isDragging}
         onClick={onClick}
         className={cn(
-          "py-1.5 px-2",
+          "py-1 sm:py-1.5 px-1.5 sm:px-2",
           durationMinutes < 45 ? "items-center" : "flex-col justify-start",
-          view === "week" ? "text-xs" : "text-sm",
+          view === "week" ? "text-[10px] sm:text-xs" : "text-xs sm:text-sm",
           className,
         )}
         currentTime={currentTime}
@@ -204,20 +204,20 @@ export function EventItem({
       >
         {durationMinutes < 45 ? (
           <div className="flex items-center gap-1 w-full min-w-0">
-            {isHoliday && <span className="text-xs">🎉</span>}
+            {isHoliday && <span className="text-[10px] sm:text-xs">🎉</span>}
             <span className="truncate flex-1 font-medium">{event.title}</span>
             {showTime && (
-              <span className="text-xs opacity-75 font-normal">{formatTimeWithOptionalMinutes(displayStart)}</span>
+              <span className="text-[9px] sm:text-xs opacity-75 font-normal">{formatTimeWithOptionalMinutes(displayStart)}</span>
             )}
           </div>
         ) : (
           <div className="w-full space-y-0.5">
             <div className="flex items-center gap-1">
-              {isHoliday && <span className="text-xs">🎉</span>}
-              <span className="truncate font-medium text-sm">{event.title}</span>
+              {isHoliday && <span className="text-[10px] sm:text-xs">🎉</span>}
+              <span className="truncate font-medium text-xs sm:text-sm">{event.title}</span>
             </div>
-            {showTime && <div className="text-xs opacity-75 font-normal">{getEventTime()}</div>}
-            {event.location && <div className="text-xs opacity-75 truncate">📍 {event.location}</div>}
+            {showTime && <div className="text-[9px] sm:text-xs opacity-75 font-normal">{getEventTime()}</div>}
+            {event.location && <div className="text-[9px] sm:text-xs opacity-75 truncate">📍 {event.location}</div>}
           </div>
         )}
       </EventWrapper>
@@ -228,7 +228,7 @@ export function EventItem({
   return (
     <button
       className={cn(
-        "focus-visible:border-ring focus-visible:ring-ring/50 flex w-full flex-col gap-2 rounded-lg p-3 text-left transition-all duration-200 outline-none focus-visible:ring-2 data-past-event:line-through data-past-event:opacity-75 hover:scale-[1.01] hover:shadow-md",
+        "focus-visible:border-ring focus-visible:ring-ring/50 flex w-full flex-col gap-2 rounded-lg p-3 sm:p-4 text-left transition-all duration-200 outline-none focus-visible:ring-2 data-past-event:line-through data-past-event:opacity-75 hover:scale-[1.01] hover:shadow-md touch-manipulation",
         getEventColorClasses(event.color, isHoliday),
         className,
       )}
@@ -241,9 +241,9 @@ export function EventItem({
     >
       <div className="flex items-center gap-2">
         {isHoliday && <span className="text-sm">🎉</span>}
-        <span className="font-medium text-sm">{event.title}</span>
+        <span className="font-medium text-sm sm:text-base">{event.title}</span>
       </div>
-      <div className="text-xs opacity-80 space-y-1">
+      <div className="text-xs sm:text-sm opacity-80 space-y-1">
         <div>
           {event.allDay ? (
             <span>All day</span>
@@ -260,7 +260,7 @@ export function EventItem({
           </div>
         )}
       </div>
-      {event.description && <div className="text-xs opacity-90 line-clamp-2">{event.description}</div>}
+      {event.description && <div className="text-xs sm:text-sm opacity-90 line-clamp-2">{event.description}</div>}
     </button>
   )
 }

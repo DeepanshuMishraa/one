@@ -99,9 +99,10 @@ export function MonthView({
         {weekdays.map((day) => (
           <div
             key={day}
-            className="text-muted-foreground/70 py-2 text-center text-xs"
+            className="text-muted-foreground/70 py-1.5 sm:py-2 text-center text-[10px] sm:text-xs"
           >
-            {day}
+            <span className="sm:hidden">{day[0]}</span>
+            <span className="max-sm:hidden">{day}</span>
           </div>
         ))}
       </div>
@@ -112,7 +113,7 @@ export function MonthView({
             className="grid grid-cols-7 [&:last-child>*]:border-b-0"
           >
             {week.map((day, dayIndex) => {
-              if (!day) return null; 
+              if (!day) return null;
 
               const dayEvents = getEventsForDay(events, day);
               const spanningEvents = getSpanningEventsForDay(events, day);
@@ -135,7 +136,7 @@ export function MonthView({
               return (
                 <div
                   key={day.toString()}
-                  className="group border-border/70 data-outside-cell:bg-muted/25 data-outside-cell:text-muted-foreground/70 border-r border-b last:border-r-0"
+                  className="group border-border/70 data-outside-cell:bg-muted/25 data-outside-cell:text-muted-foreground/70 border-r border-b last:border-r-0 min-h-[80px] sm:min-h-[100px] md:min-h-[120px]"
                   data-today={isToday(day) || undefined}
                   data-outside-cell={!isCurrentMonth || undefined}
                 >
@@ -147,13 +148,14 @@ export function MonthView({
                       startTime.setHours(DefaultStartHour, 0, 0);
                       onEventCreate(startTime);
                     }}
+                    className="h-full p-1 sm:p-2"
                   >
-                    <div className="group-data-today:bg-primary group-data-today:text-primary-foreground mt-1 inline-flex size-6 items-center justify-center rounded-full text-sm">
+                    <div className="group-data-today:bg-primary group-data-today:text-primary-foreground mt-1 inline-flex size-5 sm:size-6 items-center justify-center rounded-full text-xs sm:text-sm font-medium">
                       {format(day, "d")}
                     </div>
                     <div
                       ref={isReferenceCell ? contentRef : null}
-                      className="min-h-[calc((var(--event-height)+var(--event-gap))*2)] sm:min-h-[calc((var(--event-height)+var(--event-gap))*3)] lg:min-h-[calc((var(--event-height)+var(--event-gap))*4)]"
+                      className="min-h-[calc((var(--event-height)+var(--event-gap))*1.5)] sm:min-h-[calc((var(--event-height)+var(--event-gap))*2)] md:min-h-[calc((var(--event-height)+var(--event-gap))*3)] lg:min-h-[calc((var(--event-height)+var(--event-gap))*4)]"
                     >
                       {sortEvents(allDayEvents).map((event, index) => {
                         const eventStart = new Date(event.start);
@@ -236,7 +238,7 @@ export function MonthView({
                         <Popover modal>
                           <PopoverTrigger asChild>
                             <button
-                              className="focus-visible:border-ring focus-visible:ring-ring/50 text-muted-foreground hover:text-foreground hover:bg-muted/50 mt-[var(--event-gap)] flex h-[var(--event-height)] w-full items-center overflow-hidden px-1 text-left text-[10px] backdrop-blur-md transition outline-none select-none focus-visible:ring-[3px] sm:px-2 sm:text-xs"
+                              className="focus-visible:border-ring focus-visible:ring-ring/50 text-muted-foreground hover:text-foreground hover:bg-muted/50 mt-[var(--event-gap)] flex h-[var(--event-height)] w-full items-center overflow-hidden px-1 sm:px-2 text-left text-[9px] sm:text-xs backdrop-blur-md transition outline-none select-none focus-visible:ring-[3px] touch-manipulation"
                               onClick={(e) => e.stopPropagation()}
                             >
                               <span>
@@ -247,7 +249,7 @@ export function MonthView({
                           </PopoverTrigger>
                           <PopoverContent
                             align="center"
-                            className="max-w-52 p-3"
+                            className="max-w-52 sm:max-w-64 p-3"
                             style={
                               {
                                 "--event-height": `${EventHeight}px`,

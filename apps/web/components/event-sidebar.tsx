@@ -200,40 +200,40 @@ export function EventSidebar({ event, isOpen, onClose, onSave, onDelete }: Event
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed top-0 right-0 z-50 h-full w-80 bg-background border-l shadow-xl transition-transform duration-300 ease-out",
+          "fixed top-0 right-0 z-50 h-full w-full sm:w-[380px] md:w-[420px] bg-background border-l shadow-xl transition-transform duration-300 ease-out",
           isOpen ? "translate-x-0" : "translate-x-full",
         )}
       >
         <div className="flex h-full flex-col">
           {/* Header */}
-          <div className="flex items-center justify-between p-6 pb-4">
+          <div className="flex items-center justify-between p-4 sm:p-6 pb-3 sm:pb-4 border-b">
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Event title"
-              className="text-lg font-medium border-none shadow-none p-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground"
+              className="text-base sm:text-lg font-medium border-none shadow-none p-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground"
             />
-            <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6 ml-4 flex-shrink-0">
+            <Button variant="ghost" size="icon" onClick={onClose} className="h-6 w-6 ml-2 sm:ml-4 flex-shrink-0">
               <X className="h-4 w-4" />
             </Button>
           </div>
 
           {/* Content */}
-          <div className="flex-1 overflow-y-auto px-6 space-y-6">
-            {error && <div className="bg-destructive/10 text-destructive rounded-lg px-3 py-2 text-sm">{error}</div>}
+          <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 space-y-4 sm:space-y-6">
+            {error && <div className="bg-destructive/10 text-destructive rounded-lg px-3 py-2 text-xs sm:text-sm">{error}</div>}
 
             {/* Time Section */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-3">
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <Clock className="h-4 w-4" />
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                   {!allDay ? (
                     <>
                       <Select value={startTime} onValueChange={setStartTime}>
                         <SelectTrigger className="border-none shadow-none p-0 h-auto w-auto font-medium">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="text-xs sm:text-sm">
                           {timeOptions.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
@@ -246,7 +246,7 @@ export function EventSidebar({ event, isOpen, onClose, onSave, onDelete }: Event
                         <SelectTrigger className="border-none shadow-none p-0 h-auto w-auto font-medium">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="text-xs sm:text-sm">
                           {timeOptions.map((option) => (
                             <SelectItem key={option.value} value={option.value}>
                               {option.label}
@@ -261,141 +261,136 @@ export function EventSidebar({ event, isOpen, onClose, onSave, onDelete }: Event
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <CalendarIcon className="h-4 w-4" />
-                <div className="flex items-center gap-2 text-sm">
+                <div className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
                   <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="ghost" className="p-0 h-auto font-medium text-sm hover:bg-transparent">
+                      <Button variant="ghost" className="p-0 h-auto font-medium hover:bg-transparent">
                         {formatDisplayDate(startDate)}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2" align="start">
+                    <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
                         selected={startDate}
                         onSelect={(date) => {
                           if (date) {
                             setStartDate(date)
-                            if (isBefore(endDate, date)) {
-                              setEndDate(date)
-                            }
                             setStartDateOpen(false)
                           }
                         }}
+                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
-                  <span className="">→</span>
+                  {!allDay && <span>→</span>}
                   <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
                     <PopoverTrigger asChild>
-                      <Button variant="ghost" className="p-0 h-auto font-medium text-sm hover:bg-transparent">
+                      <Button variant="ghost" className="p-0 h-auto font-medium hover:bg-transparent">
                         {formatDisplayDate(endDate)}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2" align="start">
+                    <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="single"
                         selected={endDate}
-                        disabled={{ before: startDate }}
                         onSelect={(date) => {
                           if (date) {
                             setEndDate(date)
                             setEndDateOpen(false)
                           }
                         }}
+                        initialFocus
                       />
                     </PopoverContent>
                   </Popover>
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
-                <div className="h-4 w-4" />
-                <label className="flex items-center gap-2 text-sm cursor-pointer">
-                  <Checkbox
-                    checked={allDay}
-                    onCheckedChange={(checked) => setAllDay(checked === true)}
-                    className="h-4 w-4"
-                  />
-                  <span className="">All day</span>
+              <div className="flex items-center gap-2">
+                <Checkbox
+                  id="all-day"
+                  checked={allDay}
+                  onCheckedChange={(checked) => setAllDay(checked as boolean)}
+                  className="h-4 w-4"
+                />
+                <label htmlFor="all-day" className="text-xs sm:text-sm font-medium leading-none">
+                  All day
                 </label>
               </div>
             </div>
 
-            {/* Description */}
-            <div className="flex gap-3">
-              <FileText className="h-4 w-4  mt-1" />
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Note"
-                className="border-none shadow-none p-0 resize-none focus-visible:ring-0 placeholder:text-gray-400"
-                rows={3}
-              />
-            </div>
-
             {/* Location */}
-            <div className="flex gap-3">
-              <MapPin className="h-4 w-4 mt-1" />
-              <Input
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-                placeholder="Location"
-                className="border-none shadow-none p-0 h-auto focus-visible:ring-0 placeholder:text-gray-400"
-              />
+            <div className="space-y-2 sm:space-y-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <MapPin className="h-4 w-4" />
+                <Input
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  placeholder="Add location"
+                  className="text-xs sm:text-sm h-8 sm:h-9"
+                />
+              </div>
             </div>
 
-            {/* Color Selection */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="h-4 w-4" />
-                <span className="text-sm font-medium">Event Color</span>
+            {/* Description */}
+            <div className="space-y-2 sm:space-y-3">
+              <div className="flex items-center gap-2 sm:gap-3">
+                <FileText className="h-4 w-4" />
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Add description"
+                  className="text-xs sm:text-sm min-h-[100px]"
+                />
               </div>
-              <RadioGroup className="space-y-2" value={color} onValueChange={(value: EventColor) => setColor(value)}>
-                {colorOptions.map((colorOption) => (
-                  <div key={colorOption.value} className="flex items-center gap-3">
-                    <RadioGroupItem value={colorOption.value} className="sr-only" id={`color-${colorOption.value}`} />
-                    <label
-                      htmlFor={`color-${colorOption.value}`}
-                      className={cn(
-                        "flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-all hover:bg-muted",
-                        color === colorOption.value && "bg-muted ring-2 ring-muted-foreground",
-                      )}
-                    >
-                      <div className={cn("w-4 h-4 rounded-full", colorOption.className)} />
-                      <div className="flex-1">
-                        <div className="text-sm font-medium">{colorOption.label}</div>
-                        <div className="text-xs text-muted-foreground">{colorOption.preview}</div>
-                      </div>
-                    </label>
-                  </div>
+            </div>
+
+            {/* Color */}
+            <div className="space-y-3">
+              <RadioGroup value={color} onValueChange={(value) => setColor(value as EventColor)} className="grid grid-cols-2 gap-2">
+                {colorOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border p-2 sm:p-3 cursor-pointer transition-colors",
+                      color === option.value && "border-primary bg-primary/5",
+                    )}
+                  >
+                    <RadioGroupItem value={option.value} id={option.value} className="sr-only" />
+                    <div className={cn("h-4 w-4 rounded-full", option.className)} />
+                    <div className="space-y-0.5">
+                      <div className="text-xs sm:text-sm font-medium">{option.label}</div>
+                      <div className="text-[10px] sm:text-xs text-muted-foreground">{option.preview}</div>
+                    </div>
+                  </label>
                 ))}
               </RadioGroup>
             </div>
           </div>
 
           {/* Footer */}
-          <div className="border-t p-6">
-            <div className="flex items-center justify-between">
-              {event?.id && (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleDelete}
-                  className="text-muted-foreground hover:text-destructive h-8 w-8"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              )}
-              <div className="flex gap-4 ml-auto">
-                  <Button variant="ghost" onClick={onClose} className="text-muted-foreground hover:bg-transparent">
-                  Cancel
-                </Button>
-                  <Button onClick={handleSave}>
-                  Save
-                </Button>
-              </div>
+          <div className="flex items-center justify-between p-4 sm:p-6 border-t bg-background/95 backdrop-blur-sm">
+            {event?.id ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleDelete}
+                className="text-destructive hover:text-destructive hover:bg-destructive/10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            ) : (
+              <div />
+            )}
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={onClose} className="text-xs sm:text-sm h-8 sm:h-9">
+                Cancel
+              </Button>
+              <Button size="sm" onClick={handleSave} className="text-xs sm:text-sm h-8 sm:h-9">
+                Save
+              </Button>
             </div>
           </div>
         </div>

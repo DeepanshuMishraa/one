@@ -18,7 +18,6 @@ import { TextShimmer } from "./motion-primitives/text-shimmer";
 import { Button } from "@/components/ui/button";
 import { useToastManager } from "./ui/toast";
 
-
 export const etiquettes = [
   {
     id: "1",
@@ -30,7 +29,6 @@ export const etiquettes = [
     name: "Personal",
     color: "#7986CB",
   },
-
 ]
 
 // TODO: seperate store for zustand 
@@ -82,6 +80,7 @@ export default function Component() {
   const { data: eventsData, isLoading: eventsLoading, error } = trpc.calendar.getCalendarEvents.useQuery(undefined, {
     retry: false,
   });
+
   useMemo(() => {
     if (calendarData?.calendars && activeCalendars.length === 0) {
       setActiveCalendars(
@@ -212,17 +211,17 @@ export default function Component() {
 
   if (error?.message.includes("Your Google account session has expired")) {
     return (
-      <div className="flex h-full w-full flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground text-center">Your Google account session has expired.</p>
-        <Button onClick={handleReconnectGoogle}>Reconnect Google Calendar</Button>
+      <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-4">
+        <p className="text-muted-foreground text-center text-sm sm:text-base">Your Google account session has expired.</p>
+        <Button onClick={handleReconnectGoogle} className="w-full sm:w-auto">Reconnect Google Calendar</Button>
       </div>
     );
   }
 
   if (calendarLoading || eventsLoading) {
     return (
-      <div className="flex items-center justify-center h-full">
-        <TextShimmer className='font-mono text-sm' duration={1}>
+      <div className="flex items-center justify-center h-full p-4">
+        <TextShimmer className='font-mono text-xs sm:text-sm' duration={1}>
           Loading calendar...
         </TextShimmer>
       </div>
@@ -244,14 +243,13 @@ export default function Component() {
 
 const EventRow = memo(({ event, style }: { event: CalendarEvent; style: CSSProperties }) => {
   return (
-    <div style={style} className="px-4 py-2">
-      <div className="flex items-center gap-2">
-        <span className="font-medium">{event.title}</span>
-        <span className="text-sm text-muted-foreground">
+    <div style={style} className="px-2 sm:px-4 py-1 sm:py-2">
+      <div className="flex items-center gap-1 sm:gap-2">
+        <span className="font-medium text-xs sm:text-sm">{event.title}</span>
+        <span className="text-xs text-muted-foreground">
           {new Date(event.start).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
         </span>
       </div>
     </div>
   );
 });
-

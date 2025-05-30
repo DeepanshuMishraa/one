@@ -33,28 +33,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     <Sidebar
       variant="inset"
       {...props}
-      className="scheme-only-dark max-lg:p-3 lg:pe-1"
+      className="scheme-only-dark max-lg:p-2 lg:pe-1"
     >
-      <SidebarHeader>
+      <SidebarHeader className="p-2 sm:p-4">
         <div className="flex justify-between items-center gap-2">
           <Link className="inline-flex" href="/">
             <span className="sr-only">One</span>
             <Image
               src="/logo.svg"
               alt="One"
-              width={32}
-              height={32}
+              width={28}
+              height={28}
+              className="sm:w-8 sm:h-8"
             />
           </Link>
-          <SidebarTrigger className="text-muted-foreground/80 hover:text-foreground/80 hover:bg-transparent!" />
+          <SidebarTrigger className="text-muted-foreground/80 hover:text-foreground/80 hover:bg-transparent! h-7 w-7 sm:h-8 sm:w-8" />
         </div>
       </SidebarHeader>
-      <SidebarContent className="gap-0 mt-3 pt-3 border-t">
+      <SidebarContent className="gap-0 mt-2 sm:mt-3 pt-2 sm:pt-3 border-t px-2 sm:px-0">
         <SidebarGroup className="px-1">
           <SidebarCalendar />
         </SidebarGroup>
-        <SidebarGroup className="px-1 mt-3 pt-4 border-t">
-          <SidebarGroupLabel className="uppercase text-muted-foreground/65">
+        <SidebarGroup className="px-1 mt-2 sm:mt-3 pt-3 sm:pt-4 border-t">
+          <SidebarGroupLabel className="uppercase text-muted-foreground/65 text-xs sm:text-sm">
             My Calendars
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -63,10 +64,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuItem key={calendar.id}>
                   <SidebarMenuButton
                     asChild
-                    className="relative rounded-md [&>svg]:size-auto justify-between has-focus-visible:border-ring has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px]"
+                    className="relative rounded-md [&>svg]:size-auto justify-between has-focus-visible:border-ring has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px] py-2 sm:py-2.5"
                   >
                     <span>
-                      <span className="font-medium flex items-center justify-between gap-3">
+                      <span className="font-medium flex items-center justify-between gap-2 sm:gap-3">
                         <Checkbox
                           id={calendar.id}
                           className="sr-only peer"
@@ -75,18 +76,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         />
                         <RiCheckLine
                           className="peer-not-data-[state=checked]:invisible"
-                          size={16}
+                          size={14}
                           aria-hidden="true"
                         />
                         <label
                           htmlFor={calendar.id}
-                          className="peer-not-data-[state=checked]:line-through peer-not-data-[state=checked]:text-muted-foreground/65 after:absolute after:inset-0"
+                          className="peer-not-data-[state=checked]:line-through peer-not-data-[state=checked]:text-muted-foreground/65 after:absolute after:inset-0 text-xs sm:text-sm truncate flex-1"
                         >
                           {calendar.summary}
                         </label>
                       </span>
                       <span
-                        className="size-1.5 rounded-full"
+                        className="size-1.5 rounded-full flex-shrink-0"
                         style={{ backgroundColor: calendar.backgroundColor }}
                       ></span>
                     </span>
@@ -97,7 +98,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="p-2 sm:p-4">
         <NavUser />
       </SidebarFooter>
     </Sidebar>

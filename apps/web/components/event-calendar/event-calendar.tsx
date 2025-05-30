@@ -15,7 +15,7 @@ import {
   subMonths,
   subWeeks,
 } from "date-fns"
-import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
+import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from 'lucide-react'
 import { toast } from "sonner"
 
 import {
@@ -46,6 +46,7 @@ import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar"
 import ThemeToggle from "@/components/theme-toggle"
 import Participants from "@/components/participants"
 import { CommandMenu } from "../command-menu"
+import { useMediaQuery } from "@/hooks/use-media-query"
 
 export interface EventCalendarProps {
   events?: CalendarEvent[]
@@ -75,6 +76,7 @@ export function EventCalendar({
     isEventSidebarOpen: false,
   })
   const { open } = useSidebar()
+  const isMobile = useMediaQuery("(max-width: 768px)")
 
   const memoizedEvents = useMemo(() => events, [events])
 
@@ -240,10 +242,10 @@ export function EventCalendar({
     } else if (calendarState.view === "day") {
       return (
         <>
-          <span className="min-sm:hidden" aria-hidden="true">
+          <span className="sm:hidden" aria-hidden="true">
             {format(currentDate, "MMM d, yyyy")}
           </span>
-          <span className="max-sm:hidden min-md:hidden" aria-hidden="true">
+          <span className="max-sm:hidden md:hidden" aria-hidden="true">
             {format(currentDate, "MMMM d, yyyy")}
           </span>
           <span className="max-md:hidden">{format(currentDate, "EEE MMMM d, yyyy")}</span>
@@ -281,83 +283,94 @@ export function EventCalendar({
       }
     >
       <CalendarDndProvider onEventUpdate={handleEventDragUpdate}>
-        <div className={cn("flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-5 sm:px-4", className)}>
-          <div className="flex sm:flex-col max-sm:items-center justify-between gap-1.5">
-            <div className="flex items-center gap-1.5">
-              <SidebarTrigger
-                data-state={open ? "invisible" : "visible"}
-                className="peer size-7 text-muted-foreground/80 hover:text-foreground/80 hover:bg-transparent! sm:-ms-1.5 lg:data-[state=invisible]:opacity-0 lg:data-[state=invisible]:pointer-events-none transition-opacity ease-in-out duration-200"
-                isOutsideSidebar
-              />
-              <h2 className="font-semibold text-xl lg:peer-data-[state=invisible]:-translate-x-7.5 transition-transform ease-in-out duration-300">
-                {viewTitle}
-              </h2>
+        <div className={cn("flex flex-col gap-3 py-3 sm:py-5 px-3 sm:px-4", className)}>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <div className="flex items-center gap-2">
+                <SidebarTrigger
+                  data-state={open ? "invisible" : "visible"}
+                  className="peer size-7 sm:size-8 text-muted-foreground/80 hover:text-foreground/80 hover:bg-transparent! lg:data-[state=invisible]:opacity-0 lg:data-[state=invisible]:pointer-events-none transition-opacity ease-in-out duration-200"
+                  isOutsideSidebar
+                />
+                <h2 className="font-semibold text-lg sm:text-xl lg:peer-data-[state=invisible]:-translate-x-8 transition-transform ease-in-out duration-300">
+                  {viewTitle}
+                </h2>
+              </div>
+              <Participants participants={eventAttendees} />
             </div>
-            <Participants participants={eventAttendees} />
-          </div>
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center justify-between gap-2">
-              <div className="flex items-center sm:gap-2 max-sm:order-1">
+
+            <div className="flex items-center justify-between sm:justify-end gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
                 <CommandMenu />
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="max-sm:size-8"
+                  className="h-8 w-8 sm:h-9 sm:w-9"
                   onClick={handlePrevious}
                   aria-label="Previous"
                 >
-                  <ChevronLeftIcon size={16} aria-hidden="true" />
+                  <ChevronLeftIcon className="h-4 w-4" aria-hidden="true" />
                 </Button>
-                <Button variant="ghost" size="icon" className="max-sm:size-8" onClick={handleNext} aria-label="Next">
-                  <ChevronRightIcon size={16} aria-hidden="true" />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 sm:h-9 sm:w-9"
+                  onClick={handleNext}
+                  aria-label="Next"
+                >
+                  <ChevronRightIcon className="h-4 w-4" aria-hidden="true" />
+                </Button>
+                <Button
+                  className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm"
+                  onClick={handleToday}
+                >
+                  Today
                 </Button>
               </div>
-              <Button className="max-sm:h-8 max-sm:px-2.5!" onClick={handleToday}>
-                Today
-              </Button>
-            </div>
-            <div className="flex items-center justify-between gap-2">
-              <Button
-                variant="outline"
-                className="max-sm:h-8 max-sm:px-2.5!"
-                onClick={() => {
-                  setCalendarState(prev => ({
-                    ...prev,
-                    selectedEvent: null,
-                    isEventSidebarOpen: true
-                  }))
-                }}
-              >
-                New Event
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="gap-1.5 max-sm:h-8 max-sm:px-2! max-sm:gap-1">
-                    <span className="capitalize">{calendarState.view}</span>
-                    <ChevronDownIcon className="-me-1 opacity-60" size={16} aria-hidden="true" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-32">
-                  <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "month" }))}>
-                    Month <DropdownMenuShortcut>M</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "week" }))}>
-                    Week <DropdownMenuShortcut>W</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "day" }))}>
-                    Day <DropdownMenuShortcut>D</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "agenda" }))}>
-                    Agenda <DropdownMenuShortcut>A</DropdownMenuShortcut>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <ThemeToggle />
+
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Button
+                  variant="outline"
+                  className="h-8 sm:h-9 px-3 sm:px-4 text-xs sm:text-sm"
+                  onClick={() => {
+                    setCalendarState(prev => ({
+                      ...prev,
+                      selectedEvent: null,
+                      isEventSidebarOpen: true
+                    }))
+                  }}
+                >
+                  {isMobile ? "New" : "New Event"}
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" className="gap-1 sm:gap-1.5 h-8 sm:h-9 px-2 sm:px-3">
+                      <span className="capitalize text-xs sm:text-sm">{calendarState.view}</span>
+                      <ChevronDownIcon className="opacity-60 h-3 w-3 sm:h-4 sm:w-4" aria-hidden="true" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="min-w-32">
+                    <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "month" }))}>
+                      Month {!isMobile && <DropdownMenuShortcut>M</DropdownMenuShortcut>}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "week" }))}>
+                      Week {!isMobile && <DropdownMenuShortcut>W</DropdownMenuShortcut>}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "day" }))}>
+                      Day {!isMobile && <DropdownMenuShortcut>D</DropdownMenuShortcut>}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setCalendarState(prev => ({ ...prev, view: "agenda" }))}>
+                      Agenda {!isMobile && <DropdownMenuShortcut>A</DropdownMenuShortcut>}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+                <ThemeToggle />
+              </div>
             </div>
           </div>
         </div>
 
-        <div className="flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col overflow-hidden">
           {calendarState.view === "month" && (
             <MonthView
               currentDate={currentDate}

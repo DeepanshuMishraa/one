@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useMutation } from "@tanstack/react-query"
-import { ArrowLeft, Loader2, Send } from "lucide-react"
+import { ArrowLeft, Loader2, Send } from 'lucide-react'
 import { CommandInput } from "@/components/ui/command"
 import { getLLMResponse } from "@/lib/llm"
 import { cn } from "@/lib/utils"
@@ -304,29 +304,29 @@ Wind ${weather.windSpeed} km/h`
 
   const renderMessageContent = (message: Message) => {
     if (message.type === "tool-result") {
-      return <div className="whitespace-pre-line text-sm">{message.content}</div>
+      return <div className="whitespace-pre-line text-xs sm:text-sm">{message.content}</div>
     }
     return message.content
   }
 
   return (
-    <div className="flex flex-col h-full md:h-[550px] bg-background rounded-lg border shadow-sm overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 border-b bg-background/95 backdrop-blur-sm sticky top-0 z-10">
-        <div className="flex items-center gap-3">
-          <Button onClick={onBack} size="icon" variant="ghost" className="h-8 w-8 rounded-full">
-            <ArrowLeft className="h-4 w-4" />
+    <div className="flex flex-col h-full max-h-[90vh] sm:max-h-[550px] bg-background rounded-lg border shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between px-3 sm:px-4 py-2 sm:py-3 border-b bg-background/95 backdrop-blur-sm sticky top-0 z-10">
+        <div className="flex items-center gap-2 sm:gap-3">
+          <Button onClick={onBack} size="icon" variant="ghost" className="h-7 w-7 sm:h-8 sm:w-8 rounded-full">
+            <ArrowLeft className="h-3 w-3 sm:h-4 sm:w-4" />
             <span className="sr-only">Back</span>
           </Button>
-          <h2 className="text-sm font-medium">Chat with One</h2>
+          <h2 className="text-sm sm:text-base font-medium">Chat with One</h2>
         </div>
       </div>
 
-      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-3 md:p-4 space-y-4 scroll-smooth">
+      <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 sm:space-y-4 scroll-smooth">
         {messages.length === 0 && (
           <div className="flex items-center justify-center h-full">
-            <div className="text-center text-muted-foreground">
-              <p className="text-sm">Start a conversation</p>
-              <p className="text-xs mt-1">Ask me about the weather, your calendar, or create events!</p>
+            <div className="text-center text-muted-foreground px-4">
+              <p className="text-sm sm:text-base">Start a conversation</p>
+              <p className="text-xs sm:text-sm mt-1">Ask me about the weather, your calendar, or create events!</p>
             </div>
           </div>
         )}
@@ -335,36 +335,36 @@ Wind ${weather.windSpeed} km/h`
           <div
             key={index}
             className={cn(
-              "flex w-full items-end gap-2 animate-in fade-in-0 slide-in-from-bottom-3 duration-300",
+              "flex w-full items-end gap-2 sm:gap-3 animate-in fade-in-0 slide-in-from-bottom-3 duration-300",
               message.type === "user" ? "justify-end" : "justify-start",
             )}
           >
             {(message.type === "ai" || message.type === "tool-execution" || message.type === "tool-result") && (
-              <Avatar className="h-6 w-6 bg-primary/10">
+              <Avatar className="h-6 w-6 sm:h-7 sm:w-7 bg-primary/10 flex-shrink-0">
                 <Image src="/logo.svg" alt="logo" width={24} height={24} />
               </Avatar>
             )}
 
-            <div className="flex flex-col gap-1">
+            <div className="flex flex-col gap-1 max-w-[85%] sm:max-w-[80%]">
               <div
                 className={cn(
-                  "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm",
+                  "rounded-2xl px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base",
                   message.type === "user"
                     ? "bg-primary text-primary-foreground rounded-tr-none"
                     : message.type === "tool-execution"
                       ? "bg-muted/30 text-muted-foreground rounded-tl-none italic"
                       : message.type === "tool-result"
-                        ? "bg-muted/50 text-foreground rounded-tl-none font-mono text-xs leading-relaxed"
+                        ? "bg-muted/50 text-foreground rounded-tl-none font-mono text-xs sm:text-sm leading-relaxed"
                         : "bg-muted text-foreground rounded-tl-none",
                 )}
               >
                 {renderMessageContent(message)}
               </div>
-              <span className="text-[10px] text-muted-foreground px-2">{formatTime(message.timestamp)}</span>
+              <span className="text-xs text-muted-foreground px-2">{formatTime(message.timestamp)}</span>
             </div>
 
             {message.type === "user" && (
-              <Avatar className="h-6 w-6 bg-primary">
+              <Avatar className="h-6 w-6 sm:h-7 sm:w-7 bg-primary flex-shrink-0">
                 <Image
                   src={session?.user?.image || "/default-avatar.png"}
                   alt={session?.user?.name?.split(" ")[0] || "User"}
@@ -377,11 +377,11 @@ Wind ${weather.windSpeed} km/h`
         ))}
 
         {isPending && (
-          <div className="flex items-start gap-2 animate-in fade-in-0 slide-in-from-bottom-3 duration-300">
-            <Avatar className="h-6 w-6 bg-primary/10">
+          <div className="flex items-start gap-2 sm:gap-3 animate-in fade-in-0 slide-in-from-bottom-3 duration-300">
+            <Avatar className="h-6 w-6 sm:h-7 sm:w-7 bg-primary/10">
               <Image src="/logo.svg" alt="logo" width={24} height={24} />
             </Avatar>
-            <div className="bg-muted rounded-2xl rounded-tl-none px-4 py-2.5">
+            <div className="bg-muted rounded-2xl rounded-tl-none px-3 sm:px-4 py-2 sm:py-2.5">
               <div className="flex gap-1 items-center">
                 <div className="h-1.5 w-1.5 bg-foreground/40 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
                 <div className="h-1.5 w-1.5 bg-foreground/40 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
@@ -392,7 +392,7 @@ Wind ${weather.windSpeed} km/h`
         )}
       </div>
 
-      <div className="p-3 md:p-4 border-t bg-background/95 backdrop-blur-sm">
+      <div className="p-3 sm:p-4 border-t bg-background/95 backdrop-blur-sm">
         <form onSubmit={handleSubmit} className="flex gap-2 items-center">
           <div className="relative flex-1">
             <CommandInput
@@ -402,14 +402,14 @@ Wind ${weather.windSpeed} km/h`
               value={currentMessage}
               onValueChange={setCurrentMessage}
               onKeyDown={handleKeyDown}
-              className="pr-10 py-2.5 rounded-full border-muted-foreground/20"
+              className="pr-10 py-2.5 sm:py-3 text-sm sm:text-base rounded-full border-muted-foreground/20"
             />
           </div>
           <Button
             type="submit"
             size={isSmallScreen ? "icon" : "default"}
             disabled={isPending || !currentMessage.trim()}
-            className="rounded-full h-10 transition-all"
+            className="rounded-full h-10 sm:h-11 transition-all flex-shrink-0"
           >
             {isPending ? (
               <Loader2 className="h-4 w-4 animate-spin" />

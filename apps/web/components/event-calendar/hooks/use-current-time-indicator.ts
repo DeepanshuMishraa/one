@@ -3,12 +3,18 @@
 import { useEffect, useState } from "react";
 import { endOfWeek, isSameDay, isWithinInterval, startOfWeek } from "date-fns";
 import { StartHour, EndHour } from "@/components/event-calendar/constants";
+import { WeekCellsHeight } from "@/components/event-calendar";
+
+interface TimePosition {
+  top: number;
+  dayIndex?: number;
+}
 
 export function useCurrentTimeIndicator(
   currentDate: Date,
   view: "day" | "week",
 ) {
-  const [currentTimePosition, setCurrentTimePosition] = useState<number>(0);
+  const [currentTimePosition, setCurrentTimePosition] = useState<TimePosition>({ top: 0 });
   const [currentTimeVisible, setCurrentTimeVisible] = useState<boolean>(false);
 
   useEffect(() => {
@@ -17,15 +23,11 @@ export function useCurrentTimeIndicator(
       const hours = now.getHours();
       const minutes = now.getMinutes();
 
-      // Calculate position relative to the visible time range
-      const totalMinutes = (hours - StartHour) * 60 + minutes;
-      const totalVisibleMinutes = (EndHour - StartHour) * 60;
+      const hoursSinceStart = hours - StartHour + minutes / 60;
+      const top = hoursSinceStart * WeekCellsHeight;
 
-      // Calculate position as percentage
-      const position = Math.min(Math.max((totalMinutes / totalVisibleMinutes) * 100, 0), 100);
-
-      // Check if current day is in view based on the calendar view
       let isCurrentTimeVisible = false;
+      let dayIndex: number | undefined = undefined;
 
       if (view === "day") {
         isCurrentTimeVisible = isSameDay(now, currentDate);
@@ -36,16 +38,19 @@ export function useCurrentTimeIndicator(
           start: startOfWeekDate,
           end: endOfWeekDate,
         });
+
+        if (isCurrentTimeVisible) {
+          const startDate = startOfWeek(currentDate, { weekStartsOn: 0 });
+          dayIndex = Math.floor((now.getTime() - startDate.getTime()) / (24 * 60 * 60 * 1000));
+        }
       }
 
-      setCurrentTimePosition(position);
+      setCurrentTimePosition({ top, dayIndex });
       setCurrentTimeVisible(isCurrentTimeVisible);
     };
 
-    // Calculate immediately
     calculateTimePosition();
 
-    // Update every minute
     const interval = setInterval(calculateTimePosition, 60000);
 
     return () => clearInterval(interval);
