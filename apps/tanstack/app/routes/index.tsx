@@ -1,3 +1,5 @@
+import Appbar from "@/components/Appbar";
+import Hero from "@/components/Hero";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute('/')({
@@ -7,8 +9,9 @@ export const Route = createFileRoute('/')({
 
 function Home() {
   return (
-    <div className="flex items-center justify-center h-screen">
-      <h1 className="text-4xl">Welcome to One</h1>
-    </div>
+    <>
+      <Appbar />
+      <Hero />
+    </>
   )
 }

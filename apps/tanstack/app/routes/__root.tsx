@@ -1,4 +1,3 @@
-// app/routes/__root.tsx
 import type { ReactNode } from 'react'
 import {
   Outlet,
@@ -8,6 +7,8 @@ import {
 } from '@tanstack/react-router'
 
 import appCss from "@/styles/app.css?url"
+import { getThemeServerFn } from '@/lib/theme'
+import { ThemeProvider, useTheme } from '@/providers/theme-provider'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -20,7 +21,8 @@ export const Route = createRootRoute({
         content: 'width=device-width, initial-scale=1',
       },
       {
-        title: 'TanStack Start Starter',
+        title: 'Chat with your calendar | One',
+        description: "One is an AI Powered Calendar Assistant that allows you to chat with your calendar. It helps you manage your schedule, find time for meetings, and even book appointments. One is designed to be your personal assistant, making it easier to stay organized and on top of your tasks.One is a perfect Opensource Alternative to Google Calendar."
       },
     ],
     links: [
@@ -41,19 +43,24 @@ export const Route = createRootRoute({
     ]
   }),
   component: RootComponent,
+  loader: () => getThemeServerFn(),
 })
 
 function RootComponent() {
+  const data = Route.useLoaderData();
   return (
-    <RootDocument>
-      <Outlet />
-    </RootDocument>
+    <ThemeProvider theme={data}>
+      <RootDocument>
+        <Outlet />
+      </RootDocument>
+    </ThemeProvider>
   )
 }
 
 function RootDocument({ children }: Readonly<{ children: ReactNode }>) {
+  const { theme } = useTheme();
   return (
-    <html>
+    <html className={theme} suppressHydrationWarning>
       <head>
         <HeadContent />
       </head>
