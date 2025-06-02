@@ -22,8 +22,11 @@ export const Route = createRootRoute({
       },
       {
         title: 'Chat with your calendar | One',
-        description: "One is an AI Powered Calendar Assistant that allows you to chat with your calendar. It helps you manage your schedule, find time for meetings, and even book appointments. One is designed to be your personal assistant, making it easier to stay organized and on top of your tasks.One is a perfect Opensource Alternative to Google Calendar."
+        description: "One is an AI Powered Calendar Assistant that allows you to chat with your calendar. It helps you manage your schedule, find time for meetings, and even book appointments. One is designed to be your personal assistant, making it easier to stay organized and on top of your tasks.One is a perfect Opensource Alternative to Google Calendar.",
+        keywords: "One, AI, Calendar, Assistant, Google Calendar, Opensource, Personal Assistant, Schedule, Meetings, Book Appointments, Stay Organized, Task Management, AI Powered, Chat with your calendar, One is an AI Powered Calendar Assistant that allows you to chat with your calendar. It helps you manage your schedule, find time for meetings, and even book appointments. One is designed to be your personal assistant, making it easier to stay organized and on top of your tasks.One is a perfect Opensource Alternative to Google Calendar.",
+        icon: "/favicon.ico"
       },
+
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
