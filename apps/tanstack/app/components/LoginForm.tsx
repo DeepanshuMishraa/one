@@ -2,7 +2,7 @@
 
 import { IconBrandGoogle } from "@tabler/icons-react";
 import { Button } from "./ui/button";
-import { signIn } from "@repo/auth/client";
+import { signIn } from "../lib/auth.client";
 import { Link } from "@tanstack/react-router";
 
 

@@ -23,7 +23,7 @@ import {
   IconBrandLinkedin,
   IconBrandDiscord,
 } from "@tabler/icons-react";
-import { signOut, useSession } from "@repo/auth/client";
+import { signOut, useSession } from "../lib/auth.client";
 import { Link, useRouter } from "@tanstack/react-router";
 const resources = [
   {
