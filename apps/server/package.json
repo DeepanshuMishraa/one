@@ -1,14 +1,21 @@
 {
   "name": "server",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy --minify",
-    "cf-typegen": "wrangler types --env-interface CloudflareBindings"
+    "dev": "bun run src/index.ts --watch",
+    "build": "bun build src/index.ts --outdir dist",
+    "start": "bun run src/index.ts"
+  },
+  "peerDependencies": {
+    "typescript": "^5"
   },
   "dependencies": {
+    "better-auth": "^1.2.8",
     "hono": "^4.7.11"
-  },
-  "devDependencies": {
-    "wrangler": "^4.4.0"
   }
 }

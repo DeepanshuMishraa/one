@@ -4,6 +4,7 @@ import { db } from "@repo/db";
 import { account, session, user, verification } from "@repo/db/schema";
 
 export const auth = betterAuth({
+  baseURL: process.env.BETTERAUTH_URL as string,
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
@@ -27,5 +28,10 @@ export const auth = betterAuth({
       prompt: "consent"
     }
   },
-  allowedDomains: ["http://localhost:3000", "http://localhost:8787"]
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true
+    }
+  },
+  trustedOrigins: [process.env.FRONTEND_URL as string]
 });
