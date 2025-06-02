@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from 'hono/cors';
-import { auth } from './lib/auth';
+import { auth } from './utils/auth';
+import { calendarRouter } from "./routes/calendar";
 
 
 const app = new Hono()
@@ -23,7 +24,7 @@ app.on(["POST", "GET"], "/api/auth/*", (c) => {
 });
 
 
-app.get("/", (c) => c.text("Hello World"))
+app.route("/calendar", calendarRouter)
 
 if (import.meta.main) {
   console.log(`Server is running on port 8787`);

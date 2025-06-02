@@ -3,10 +3,11 @@
 import { IconBrandGoogle } from "@tabler/icons-react";
 import { Button } from "./ui/button";
 import { signIn } from "../lib/auth.client";
-import { Link } from "@tanstack/react-router";
+import { Link, useRouter } from "@tanstack/react-router";
 
 
 export default function LoginForm() {
+  const router = useRouter()
   return (
     <>
       <div className="flex flex-col items-center justify-center min-h-[100svh] space-y-10">
@@ -14,6 +15,11 @@ export default function LoginForm() {
         <Button onClick={() => {
           signIn.social({
             provider: "google",
+            fetchOptions: {
+              onSuccess: () => {
+                router.navigate({ to: `${process.env.FRONTEND_URL}/dashboard` })
+              }
+            }
           })
         }} variant="outline" className="cursor-pointer py-6" size="lg">
           <IconBrandGoogle stroke={3.5} /> Continue with Google

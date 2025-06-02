@@ -20,7 +20,8 @@
     ".": "./init.ts",
     "./client": "./client.tsx",
     "./router": "./routers/_app.ts",
-    "./server": "./server.tsx"
+    "./server": "./server.tsx",
+    "./utils": "./utils/google-auth.ts"
   },
   "keywords": [],
   "author": "",

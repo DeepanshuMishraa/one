@@ -9,6 +9,7 @@ import {
 import appCss from "@/styles/app.css?url"
 import { getThemeServerFn } from '@/lib/theme'
 import { ThemeProvider, useTheme } from '@/providers/theme-provider'
+import QueryProvideR from '@/providers/query-provider'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -53,9 +54,11 @@ function RootComponent() {
   const data = Route.useLoaderData();
   return (
     <ThemeProvider theme={data}>
-      <RootDocument>
-        <Outlet />
-      </RootDocument>
+      <QueryProvideR>
+        <RootDocument>
+          <Outlet />
+        </RootDocument>
+      </QueryProvideR>
     </ThemeProvider>
   )
 }

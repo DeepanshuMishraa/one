@@ -1,11 +1,10 @@
-"use client";
-
 import { useState, useMemo, memo } from "react";
-import { trpc } from "@repo/trpc/client";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { create } from 'zustand';
 import { FixedSizeList as List } from 'react-window';
 import type { CSSProperties } from 'react';
 import { format } from "date-fns";
+import { client } from "@/lib/client";
 
 import {
   EventCalendar,
@@ -30,8 +29,6 @@ export const etiquettes = [
     color: "#7986CB",
   },
 ]
-
-// TODO: seperate store for zustand 
 
 interface CalendarState {
   activeCalendars: { id: string; isActive: boolean }[];
@@ -73,12 +70,42 @@ export const getEventColor = (backgroundColor: string): EventColor => {
 };
 
 export default function Component() {
-  const { data: calendarData, isLoading: calendarLoading } = trpc.calendar.getCalendars.useQuery();
+  const queryClient = useQueryClient();
   const [activeCalendars, setActiveCalendars] = useState<{ id: string; isActive: boolean }[]>([]);
-  const toast = useToastManager()
+  const toast = useToastManager();
 
-  const { data: eventsData, isLoading: eventsLoading, error } = trpc.calendar.getCalendarEvents.useQuery(undefined, {
-    retry: false,
+  const { data: calendarData, isLoading: calendarLoading } = useQuery({
+    queryKey: ['calendars'],
+    queryFn: () => client.calendar.calendars.$get()
+  });
+
+  const { data: eventsData, isLoading: eventsLoading, error } = useQuery({
+    queryKey: ['events'],
+    queryFn: () => client.calendar.events.$get(),
+    retry: false
+  });
+
+  const createEventMutation = useMutation({
+    mutationFn: (eventData: { summary: string; description: string; start: string; end: string }) =>
+      client.calendar.events.$post({ json: eventData }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+
+  const updateEventMutation = useMutation({
+    mutationFn: ({ id, ...data }: { id: string; summary: string; description: string; start: string; end: string }) =>
+      client.calendar.events[id].$put({ json: data }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: (eventId: string) => client.calendar.events[eventId].$delete(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['events'] });
+    },
   });
 
   useMemo(() => {
@@ -123,23 +150,6 @@ export default function Component() {
     });
   }, [transformedEvents, activeCalendarMap, eventsData?.events]);
 
-  const utils = trpc.useContext();
-  const createEventMutation = trpc.calendar.createCalendarEvent.useMutation({
-    onSuccess: () => {
-      utils.calendar.getCalendarEvents.invalidate();
-    },
-  });
-  const updateEventMutation = trpc.calendar.updateCalendarEvent.useMutation({
-    onSuccess: () => {
-      utils.calendar.getCalendarEvents.invalidate();
-    },
-  });
-  const deleteEventMutation = trpc.calendar.deleteCalendarEvent.useMutation({
-    onSuccess: () => {
-      utils.calendar.getCalendarEvents.invalidate();
-    },
-  });
-
   const handleEventAdd = async (event: CalendarEvent) => {
     try {
       await createEventMutation.mutateAsync({
@@ -180,15 +190,13 @@ export default function Component() {
         description: "Please try again",
         id: toastId,
         type: "error",
-      })
+      });
     }
   };
 
   const handleEventDelete = async (eventId: string) => {
     try {
-      await deleteEventMutation.mutateAsync({
-        id: eventId,
-      });
+      await deleteEventMutation.mutateAsync(eventId);
     } catch (error) {
       console.error("Failed to delete event:", error);
     }
@@ -209,7 +217,7 @@ export default function Component() {
     );
   };
 
-  if (error?.message.includes("Your Google account session has expired")) {
+  if (error?.message?.includes("Your Google account session has expired")) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center gap-4 p-4">
         <p className="text-muted-foreground text-center text-sm sm:text-base">Your Google account session has expired.</p>

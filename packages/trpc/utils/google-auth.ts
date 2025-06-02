@@ -2,12 +2,12 @@ import { google } from "googleapis";
 import { db } from "@repo/db";
 import { account } from "@repo/db/schema";
 import { eq } from "drizzle-orm";
-import { headers } from "next/headers";
+import { getHeaders } from '@tanstack/react-start/server'
 import { auth } from "@repo/auth/auth";
 
 export const GetUserSession = async () => {
   const session = await auth.api.getSession({
-    headers: await headers(),
+    headers: new Headers(await getHeaders() as Record<string, string>),
   });
   if (!session?.user) {
     throw new Error("User not authenticated");
