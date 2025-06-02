@@ -3,7 +3,7 @@
 import { IconBrandGoogle } from "@tabler/icons-react";
 import { Button } from "./ui/button";
 import { signIn } from "@repo/auth/client";
-import Link from "next/link";
+import { Link } from "@tanstack/react-router";
 
 
 export default function LoginForm() {
@@ -20,7 +20,7 @@ export default function LoginForm() {
         </Button>
 
         <div className="flex flex-col items-center justify-center">
-          <Link href="/" className="text-md text-muted-foreground text-center">
+          <Link to="/" className="text-md text-muted-foreground text-center">
             Return to Home
           </Link>
         </div>
